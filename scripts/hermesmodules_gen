@@ -59,7 +59,7 @@ def cli(config, json_dir):
     
     the_system.apps["hermesmodulesapp"] = hermesmodulesapp_gen.get_hermesmodules_app(
         nickname = "the_solo_app", 
-	num_hermescorecontrollers = hermesmodules.num_hermescorecontrollers,
+	num_hermescontrollers = hermesmodules.num_hermescontrollers,
 	some_configured_value = hermesmodules.some_configured_value
     )
 

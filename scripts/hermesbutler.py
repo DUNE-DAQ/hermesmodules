@@ -124,113 +124,6 @@ class HermesController :
         self.node.getNode('mux.csr.ctrl.sel_buf').write(i)
         self.node.getClient().dispatch()
 
-    
-
-# -----------------------------------------------------------------------------
-# rx_endpoints = {
-#     'np02-srv-001:priv': {
-#         'mac': 0xd85ed38cc4e3,
-#         'ip': 0xc0a80201, # 192.168.2.1
-#         'port': 0x4444,
-#     },
-#     'np02-srv-001-100G': {
-#         'mac': 0x6cfe5447a128,
-#         'ip': 0x0a498b16, # 10.73.139.22
-#         'port': 0x4444,
-#     },
-#     'np04-srv-021-100G': {
-#         'mac': 0xec0d9a8eba10,
-#         'ip': 0x0a49883c, # 10.73.139.16
-#         'port': 0x4444,
-#     },
-# }
-
-# tx_endpoints = {
-#     'np04-zcu-001:priv': {
-#         'mac': 0x000a3504b5f7,
-#         'ip': 0xc0a80202, # 192.168.2.2
-#         'port': 0x4444,
-#     },
-#     'np04-zcu-001-10G': {
-#         'mac': 0x80d3360052ff,
-#         'ip': 0x0a498b17, # 10.73.139.23
-#         'port': 0x4444,
-#     },
-
-#     ### WIB 301
-#     'np04-wib-301-d0': {
-#         'mac': 0x80d336005230,
-#         'ip': 0x0a498b26, # 10.73.139.38
-#         'port': 0x4444,
-#     },
-#     'np04-wib-301-d1': {
-#         'mac': 0x80d336005231,
-#         'ip': 0x0a498b27, # 10.73.139.39
-#         'port': 0x4444,
-#     },
-    
-#     ### WIB 501
-#     'np04-wib-501-d0': {
-#         'mac': 0x80d336005250,
-#         'ip': 0x0a498b1e, # 10.73.139.30
-#         'port': 0x4444,
-#     },
-#     'np04-wib-501-d1': {
-#         'mac': 0x80d336005251,
-#         'ip': 0x0a498b1f, # 10.73.139.31
-#         'port': 0x4444,
-#     },
-
-#     ### WIB 502
-#     'np04-wib-502-d0': {
-#         'mac': 0x80d336005252,
-#         'ip': 0x0a498b20, # 10.73.139.32
-#         'port': 0x4444,
-#     },
-#     'np04-wib-502-d1': {
-#         'mac': 0x80d336005253,
-#         'ip': 0x0a498b21, # 10.73.139.33
-#         'port': 0x4444,
-#     },
-
-
-#     ### WIB 503
-#     'np04-wib-503-d0': {
-#         'mac': 0x80d336005254,
-#         'ip': 0x0a498b18, # 10.73.139.24
-#         'port': 0x4444,
-#     },
-#     'np04-wib-503-d1': {
-#         'mac': 0x80d336005255,
-#         'ip': 0x0a498b19, # 10.73.139.24
-#         'port': 0x4444,
-#     },
-
-
-#     ### WIB 504
-#     'np04-wib-504-d0': {
-#         'mac': 0x80d336005256,
-#         'ip': 0x0a498b18, # 10.73.139.34
-#         'port': 0x4444,
-#     },
-#     'np04-wib-504-d1': {
-#         'mac': 0x80d336005257,
-#         'ip': 0x0a498b19, # 10.73.139.35
-#         'port': 0x4444,
-#     },
-
-#     ### WIB 505
-#     'np04-wib-505-d0': {
-#         'mac': 0x80d336005258,
-#         'ip': 0x0a498b1c, # 10.73.139.28
-#         'port': 0x4444,
-#     },
-#     'np04-wib-505-d1': {
-#         'mac': 0x80d336005259,
-#         'ip': 0x0a498b1d, # 10.73.139.29
-#         'port': 0x4444,
-#     }
-# }
 
 
 ctrl_hosts = [
@@ -261,14 +154,16 @@ MAX_MGT=2
 MAX_SRCS_P_MGT =16
 mgts_all = tuple(str(i) for i in range(MAX_MGT))
 
-class CrappyObj:
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+
+class HermesCliObj:
     pass
 
-@click.group(chain=True)
+@click.group(chain=True, context_settings=CONTEXT_SETTINGS)
 @click.argument('ctrl_id', type=click.Choice(ctrl_hosts))
 @click.pass_context
 def cli(ctx, ctrl_id):
-    obj = CrappyObj
+    obj = HermesCliObj
 
     uhal.setLogLevelTo(uhal.LogLevel.WARNING)
 

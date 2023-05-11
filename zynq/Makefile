@@ -25,6 +25,7 @@ install-wib:
 
 clean:
 		@rm -rf build $(PBGENS)
+		@rm -rf build $(BINS)
 
 # binaries depend on all component objects
 $(BINS): %: build/%.o $(LOBJ) $(PGOBJS)

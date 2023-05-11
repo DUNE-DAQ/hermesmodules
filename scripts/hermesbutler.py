@@ -142,9 +142,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 # -----------------
 def validate_device(ctx, param, value):
-
     lDevices = ctx.obj.cm.getDevices()
-    if value not in lDevices:
+    if value and (value not in lDevices):
         raise click.BadParameter(
             'Device must be one of '+
             ', '.join(["'"+lId+"'" for lId in lDevices])
@@ -157,43 +156,51 @@ class HermesCliObj:
     def __init__(self):
         uhal.setLogLevelTo(uhal.LogLevel.WARNING)
         self.cm  = uhal.ConnectionManager('file://${HERMESMODULES_SHARE}/config/c.xml')
+        self.hw = None
+        self.ctrl_id = None
+        self._controller = None
+
+    @property
+    def hermes(self):
+        if self._controller is None:
+            hw = self.cm.getDevice(self.ctrl_id)
+
+            # Identify board
+            is_zcu = hw.getNodes('tx.info')
+            is_wib = hw.getNodes('info')
+
+            if is_zcu:
+                print("zcu mode")
+                tx_mux = hw.getNode('tx')
+            elif is_wib:
+                print("wib mode")
+                tx_mux = hw.getNode()
+            else:
+                raise ValueError(f"{ctrl_id} is neither a zcu nor a wib")
+
+            self.hw = hw
+            self._controller = HermesController(tx_mux)
+
+        return self._controller        
+
 
 @click.group(chain=True, context_settings=CONTEXT_SETTINGS)
-@click.argument('ctrl_id', callback=validate_device)
+@click.option('-d', '--device', callback=validate_device, help="IPBus device")
 # @click.pass_context
 @click.pass_obj
-def cli(obj, ctrl_id):
-    # obj = HermesCliObj
+def cli(obj, device):
 
-
-    hw = obj.cm.getDevice(ctrl_id)
-
-    # Identify board
-    is_zcu = hw.getNodes('tx.info')
-    is_wib = hw.getNodes('info')
-
-    if is_zcu:
-        print("zcu mode")
-        tx_mux = hw.getNode('tx')
-    elif is_wib:
-        print("wib mode")
-        tx_mux = hw.getNode()
-    else:
-        raise ValueError(f"{ctrl_id} is neither a zcu nor a wib")
-
-    obj.hw = hw
-    obj.hermes = HermesController(tx_mux)
-
-    # ctx.obj = obj
+    obj.ctrl_id = device
 
 @cli.command()
-def addrbook():
+@click.pass_obj
+def addrbook(obj):
 
     t = Table(title="Control hosts")
     t.add_column('name')
-    t.add_column('addrtable', style='green')
-    for h,a in ctrl_hosts.items():
-        t.add_row(h, a)
+    # t.add_column('addrtable', style='green')
+    for h in obj.cm.getDevices():
+        t.add_row(h)
     print(t)
 
     t = Table(title="Receivers")
@@ -202,7 +209,7 @@ def addrbook():
     t.add_column('ip', style='blue')
     t.add_column('port', style='blue')
     for h,d in rx_endpoints.items():
-        t.add_row(h, f"0x{d['mac']:012x}", f"0x{d['ip']:08x}", str(d['port']))
+        t.add_row(h, f"0x{d['mac']:012x}", f"{d['ip']}", str(d['port']))
     print(t)
 
     t = Table(title="Transmitters")
@@ -211,7 +218,7 @@ def addrbook():
     t.add_column('ip', style='blue')
     t.add_column('port', style='blue')
     for h,d in tx_endpoints.items():
-        t.add_row(h, f"0x{d['mac']:012x}", f"0x{d['ip']:08x}", str(d['port']))
+        t.add_row(h, f"0x{d['mac']:012x}", f"{d['ip']}", str(d['port']))
     print(t)
 
 

@@ -15,6 +15,8 @@ find_package(daq-cmake REQUIRED)
 daq_setup_environment()
 
 
+find_package(uhal REQUIRED)
+find_package(ers REQUIRED)
 find_package(appfwk REQUIRED)
 find_package(opmonlib REQUIRED)
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
@@ -32,7 +34,7 @@ daq_codegen(hermescontrollerinfo.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/In
 
 # See https://dune-daq-sw.readthedocs.io/en/latest/packages/daq-cmake/#daq_add_library
 
-daq_add_library( LINK_LIBRARIES ) # Any source files and/or dependent libraries to link in not yet determined
+daq_add_library(*.cpp LINK_LIBRARIES ers::ers uhal::uhal) # Any source files and/or dependent libraries to link in not yet determined
 
 ##############################################################################
 

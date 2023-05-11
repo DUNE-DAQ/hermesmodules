@@ -125,50 +125,48 @@ class HermesController :
         self.node.getClient().dispatch()
 
 
-
-ctrl_hosts = [
-    'np04-zcu-001',
-    'np04-wib-301',
-    'np04-wib-302',
-    'np04-wib-303',
-    'np04-wib-304',
-    'np04-wib-305',
-
-    'np04-wib-401',
-    'np04-wib-402',
-    'np04-wib-403',
-    'np04-wib-404',
-    'np04-wib-405',
-    
-    'np04-wib-501',
-    'np04-wib-502',
-    'np04-wib-503',
-    'np04-wib-504',
-    'np04-wib-505',
-]
-
 # N_MGT=4
 # N_SRC=8
 # N_SRCS_P_MGT = N_SRC//N_MGT
 MAX_MGT=2
 MAX_SRCS_P_MGT =16
 mgts_all = tuple(str(i) for i in range(MAX_MGT))
-
+# 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
+# DEFAULT_MAP = {'connections': '${HERMESMODULES_SHARE}/config/etc/connections.xml'}
+# CONTEXT_SETTINGS = {
+#     'help_option_names': ['-h', '--help'],
+#     'default_map': DEFAULT_MAP,
+#     }
+
+# -----------------
+def validate_device(ctx, param, value):
+
+    lDevices = ctx.obj.cm.getDevices()
+    if value not in lDevices:
+        raise click.BadParameter(
+            'Device must be one of '+
+            ', '.join(["'"+lId+"'" for lId in lDevices])
+            )
+    return value
+# -----------------
+
 class HermesCliObj:
-    pass
+    
+    def __init__(self):
+        uhal.setLogLevelTo(uhal.LogLevel.WARNING)
+        self.cm  = uhal.ConnectionManager('file://${HERMESMODULES_SHARE}/config/c.xml')
 
 @click.group(chain=True, context_settings=CONTEXT_SETTINGS)
-@click.argument('ctrl_id', type=click.Choice(ctrl_hosts))
-@click.pass_context
-def cli(ctx, ctrl_id):
-    obj = HermesCliObj
+@click.argument('ctrl_id', callback=validate_device)
+# @click.pass_context
+@click.pass_obj
+def cli(obj, ctrl_id):
+    # obj = HermesCliObj
 
-    uhal.setLogLevelTo(uhal.LogLevel.WARNING)
 
-    cm  = uhal.ConnectionManager('file://${CRAPPYZCU_SHARE}/config/c.xml')
-    hw = cm.getDevice(ctrl_id)
+    hw = obj.cm.getDevice(ctrl_id)
 
     # Identify board
     is_zcu = hw.getNodes('tx.info')
@@ -186,7 +184,7 @@ def cli(ctx, ctrl_id):
     obj.hw = hw
     obj.hermes = HermesController(tx_mux)
 
-    ctx.obj = obj
+    # ctx.obj = obj
 
 @cli.command()
 def addrbook():
@@ -606,4 +604,4 @@ if __name__ == '__main__':
     logging.basicConfig(
         level="INFO", format=FORMAT, datefmt="[%X]", handlers=[RichHandler()]
     )
-    cli()
+    cli(obj=HermesCliObj())

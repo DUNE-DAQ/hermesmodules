@@ -22,6 +22,11 @@ install-wib:
 		install -m 0755 hermes_udp_srv "$(DESTDIR)/bin/"
 		install -m 0755 init_scripts/S99hermes_udp_srv_wib.sh "/etc/rc5.d"
 
+install-zcu102:
+		install -d "$(DESTDIR)/bin/"
+		install -m 0755 hermes_udp_srv "$(DESTDIR)/bin/"
+		install -m 0755 init_scripts/S99hermes_udp_srv_zcu102.sh "/etc/rc5.d"
+
 
 clean:
 		@rm -rf build $(PBGENS)

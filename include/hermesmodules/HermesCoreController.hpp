@@ -17,6 +17,12 @@ ERS_DECLARE_ISSUE(hermesmodules,
                   "Hermes Input Buffer " << bid << " does not exist",
                   ((int)bid));
 
+ERS_DECLARE_ISSUE(hermesmodules,
+                  MagicNumberError,
+                  "Hermes Magic number failed " << found << " (" << expected << ")",
+                  ((int)found)((int)expected));
+
+
 namespace hermesmodules {
 
 class HermesCoreController {

@@ -26,8 +26,7 @@ HermesCoreController::load_hw_info() {
   m_tx_mux.getClient().dispatch();
   if (magic.value() != 0xdeadbeef){
       // TODO: add ERS exception
-      // raise ValueError(f"Magic number check failed. Expected "0xdeadbeef", found '{hex(self.magic)}'")
-
+      throw MagicNumberError(ERS_HERE, magic.value(),0xdeadbeef);
   }
 
   auto n_mgt = m_tx_mux.getNode("info.generics.n_mgts").read();
@@ -48,11 +47,11 @@ HermesCoreController::load_hw_info() {
 void
 HermesCoreController::sel_tx_mux(uint32_t i) {
   if ( i >= m_core_info.n_mgt ) {
-    throw LinkDoesNotExist(i);
+    throw LinkDoesNotExist(ERS_HERE, i);
   }
 
   m_tx_mux.getNode("csr.ctrl.sel").write(i);
-  m_tx_mux.getClient()dispatch();
+  m_tx_mux.getClient().dispatch();
 }
 
 
@@ -60,11 +59,11 @@ HermesCoreController::sel_tx_mux(uint32_t i) {
 void
 HermesCoreController::sel_tx_mux_buf(uint32_t i) {
   if ( i >= m_core_info.n_src ) {
-    throw InputBufferDoesNotExist(i);
+    throw InputBufferDoesNotExist(ERS_HERE, i);
   }
 
   m_tx_mux.getNode("mux.csr.ctrl.sel_buf").write(i);
-  m_tx_mux.getClient()dispatch();
+  m_tx_mux.getClient().dispatch();
 }
 
 
@@ -74,24 +73,24 @@ HermesCoreController::reset(bool nuke) {
 
     if (nuke) {
         m_tx_mux.getNode("csr.ctrl.nuke").write(0x1);
-        m_tx_mux.getClient()dispatch();
+        m_tx_mux.getClient().dispatch();
 
         // time.sleep(0.1);
         std::this_thread::sleep_for (std::chrono::milliseconds(1));
 
         m_tx_mux.getNode("csr.ctrl.nuke").write(0x0);
-        m_tx_mux.getClient()dispatch();
+        m_tx_mux.getClient().dispatch();
     }
     
     m_tx_mux.getNode("csr.ctrl.soft_rst").write(0x1);
-    m_tx_mux.getClient()dispatch();
+    m_tx_mux.getClient().dispatch();
 
     // time.sleep(0.1)
     std::this_thread::sleep_for (std::chrono::milliseconds(1));
 
 
     m_tx_mux.getNode("csr.ctrl.soft_rst").write(0x0);
-    m_tx_mux.getClient()dispatch();
+    m_tx_mux.getClient().dispatch();
 
 }
 
@@ -100,57 +99,57 @@ HermesCoreController::reset(bool nuke) {
 void
 HermesCoreController::enable(uint32_t link, bool enable) {
 
-  if (link >= m_core_info.n_mgt) {
-    // TODO: add ERS exception
-    // raise ValueError(f"MGT {link} not instantiated")
-    throw LinkDoesNotExist(link);
-  }
+//   if (link >= m_core_info.n_mgt) {
+//     // TODO: add ERS exception
+//     // raise ValueError(f"MGT {link} not instantiated")
+//     throw LinkDoesNotExist(link);
+//   }
 
-  this->sel_tx_mux(link);
+//   this->sel_tx_mux(link);
 
-  auto tx_en = m_tx_mux.get_node("mux.csr.ctrl.tx_en").read();
-  auto buf_en = m_tx_mux.get_node("mux.csr.ctrl.en_buf").read();
-  auto ctrl_en = m_tx_mux.get_node("mux.csr.ctrl.en").read();
+//   auto tx_en = m_tx_mux.get_node("mux.csr.ctrl.tx_en").read();
+//   auto buf_en = m_tx_mux.get_node("mux.csr.ctrl.en_buf").read();
+//   auto ctrl_en = m_tx_mux.get_node("mux.csr.ctrl.en").read();
 
 
 
-  if ( enable ) {
+//   if ( enable ) {
 
-    // Enable transmitter first
-    m_tx_mux.getNode("mux.csr.ctrl.tx_en").write(0x1);
+//     // Enable transmitter first
+//     m_tx_mux.getNode("mux.csr.ctrl.tx_en").write(0x1);
 
-    // Enable then input buffers
+//     // Enable then input buffers
 
-    // Then 
+//     // Then 
 
-  } else {
+//   } else {
 
-  }
+//   }
 
-  // tx_en = tx_en if tx_en is not None else enable
-  // buf_en = buf_en if buf_en is not None else enable
+//   // tx_en = tx_en if tx_en is not None else enable
+//   // buf_en = buf_en if buf_en is not None else enable
 
-  //   if tx_en is not None:
-  //       print(f"- {'Enabling' if tx_en else 'Disabling'} 'tx block'")
-  //       hrms.get_node('mux.csr.ctrl.tx_en').write(tx_en)
-  //   print()
+//   //   if tx_en is not None:
+//   //       print(f"- {'Enabling' if tx_en else 'Disabling'} 'tx block'")
+//   //       hrms.get_node('mux.csr.ctrl.tx_en').write(tx_en)
+//   //   print()
 
 
   
 
-    if buf_en :
-        print(f"- {'Enabling' if buf_en else 'Disabling'} 'input buffers'")
-        hrms.get_node('mux.csr.ctrl.en_buf').write(buf_en)
+//     if buf_en :
+//         print(f"- {'Enabling' if buf_en else 'Disabling'} 'input buffers'")
+//         hrms.get_node('mux.csr.ctrl.en_buf').write(buf_en)
 
-    time.sleep(0.1)
+//     time.sleep(0.1)
 
-    if enable is not None:
-        print(f"- {'Enabling' if enable else 'Disabling'} 'mux'")
-        hrms.get_node('mux.csr.ctrl.en').write(enable)
+//     if enable is not None:
+//         print(f"- {'Enabling' if enable else 'Disabling'} 'mux'")
+//         hrms.get_node('mux.csr.ctrl.en').write(enable)
 
 
     
-    hrms.dispatch()
+//     hrms.dispatch()
 
 }
 

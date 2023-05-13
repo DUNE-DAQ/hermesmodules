@@ -20,7 +20,7 @@ local cs = {
     monitoring_dest: s.enum(     "MonitoringDest", ["local", "cern", "pocket"]),
 
     hermesmodules: s.record("hermesmodules", [
-        s.field( "some_configured_value", self.int4, default=31415, doc="A value which configures the HermesController DAQModule instance"),
+        s.field( "addrtab", self.string, default="", doc="Hermes core address table"),
         s.field( "num_hermescontrollers", self.int4, default=1, doc="A value which configures the number of instances of HermesController"),
     ]),
 

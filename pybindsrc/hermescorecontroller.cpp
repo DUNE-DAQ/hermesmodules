@@ -23,7 +23,15 @@ register_hermescorecontroller(py::module& m)
 {
     py::class_<HermesCoreController>(m, "HermesCoreController")
     .def(py::init<uhal::HwInterface>())
-    .def("load_hw_info", &HermesCoreController::load_hw_info)
+    // .def("load_hw_info", &HermesCoreController::load_hw_info)
+    .def("sel_tx_mux", &HermesCoreController::sel_tx_mux)
+    .def("sel_tx_mux_buf", &HermesCoreController::sel_tx_mux_buf)
+    .def("reset", &HermesCoreController::reset)
+    .def("enable", &HermesCoreController::enable)
+    .def("config_mux", &HermesCoreController::config_mux)
+    .def("config_udp", &HermesCoreController::config_udp)
+    .def("config_fake_src", &HermesCoreController::config_fake_src)
+    .def("read_stats", &HermesCoreController::read_stats)
 
     // .def("get_attribute",
     //      py::overload_cast<const std::string&>

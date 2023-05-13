@@ -28,39 +28,44 @@ namespace hermesmodules {
 class HermesCoreController {
 
 public:
-  explicit HermesCoreController(uhal::HwInterface, std::string tx_mux_id="");
-  virtual ~HermesCoreController();
-
-  void load_hw_info();
-
-  void sel_tx_mux(uint32_t i) ;
-
-  void sel_tx_mux_buf(uint32_t i);
-
-  void reset(bool nuke=false);
-
-  void enable(uint32_t link, bool enable);
-
-  void config_mux() {}
-
-  void config_udp() {}
-
-  void config_fake_src() {}
-
-  void read_stats() {}
-
-
-private:
 
   struct CoreInfo {
     uint32_t n_mgt;
     uint32_t n_src;
     uint32_t ref_freq;
+    uint32_t srcs_per_mux;
   };
 
+  explicit HermesCoreController(uhal::HwInterface, std::string tx_mux_id="");
+  virtual ~HermesCoreController();
+
+  const CoreInfo& get_info() const { return m_core_info; }
+
+  void sel_tx_mux(uint16_t i) ;
+
+  void sel_tx_mux_buf(uint16_t i);
+
+  void reset(bool nuke=false);
+
+  void enable(uint16_t link, bool enable);
+
+  void config_mux(uint16_t link, uint16_t det, uint16_t crate, uint16_t slot);
+
+  void config_udp(uint16_t link, uint64_t src_mac, uint32_t src_ip, uint16_t src_port, uint64_t dst_mac, uint32_t dst_ip, uint16_t dst_port, uint32_t filters);
+
+  void config_fake_src(uint16_t link, uint16_t n_src, uint16_t data_len, uint16_t rate);
+
+  void read_stats();
+
+
+private:
+
+  void load_hw_info();
 
   uhal::HwInterface m_hw;
+
   const uhal::Node& m_tx_mux;
+
   CoreInfo m_core_info;
 
 };

@@ -17,6 +17,8 @@
 #include <limits>
 #include <string>
 
+#include "hermesmodules/HermesCoreController.hpp"
+
 namespace dunedaq::hermesmodules {
 
 class HermesController : public dunedaq::appfwk::DAQModule
@@ -49,6 +51,8 @@ private:
   // do_conf in HermesController.cpp
 
   void do_conf(const data_t&);
+
+  std::unique_ptr<HermesCoreController> m_core_controller;
 
   int m_some_configured_value { std::numeric_limits<int>::max() }; // Intentionally-ridiculous value pre-configuration
 

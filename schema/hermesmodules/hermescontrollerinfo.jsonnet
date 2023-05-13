@@ -1,5 +1,5 @@
 local moo = import "moo.jsonnet";
-local s = moo.oschema.schema("dunedaq.hermesmodules.hermescorecontrollerinfo");
+local s = moo.oschema.schema("dunedaq.hermesmodules.hermescontrollerinfo");
 
 local info = {
 

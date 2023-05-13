@@ -1,6 +1,6 @@
 
 CXXFLAGS = -g -O2 -Isrc -std=c++17
-LFLAGS = -lzmq
+LFLAGS = 
 
 # output binary for each of these (no headers)
 BSRC = $(wildcard src/*.cxx)
@@ -17,13 +17,20 @@ BINS = $(notdir $(basename $(BSRC)))
 all: $(BINS)
 		@echo Finished building
 
-install:
+install-wib:
 		install -d "$(DESTDIR)/bin/"
-		install -m 0755 crappyhal_srv "$(DESTDIR)/bin/"
+		install -m 0755 hermes_udp_srv "$(DESTDIR)/bin/"
+		install -m 0755 init_scripts/S99hermes_udp_srv_wib.sh "/etc/rc5.d"
+
+install-zcu102:
+		install -d "$(DESTDIR)/bin/"
+		install -m 0755 hermes_udp_srv "$(DESTDIR)/bin/"
+		install -m 0755 init_scripts/S99hermes_udp_srv_zcu102.sh "/etc/rc5.d"
 
 
 clean:
 		@rm -rf build $(PBGENS)
+		@rm -rf build $(BINS)
 
 # binaries depend on all component objects
 $(BINS): %: build/%.o $(LOBJ) $(PGOBJS)

@@ -1,5 +1,5 @@
 /**
- * @file HermesCoreController.hpp
+ * @file HermesController.hpp
  *
  * Developer(s) of this DAQModule have yet to replace this line with a brief description of the DAQModule.
  *
@@ -17,38 +17,42 @@
 #include <limits>
 #include <string>
 
+#include "hermesmodules/HermesCoreController.hpp"
+
 namespace dunedaq::hermesmodules {
 
-class HermesCoreController : public dunedaq::appfwk::DAQModule
+class HermesController : public dunedaq::appfwk::DAQModule
 {
 public:
-  explicit HermesCoreController(const std::string& name);
+  explicit HermesController(const std::string& name);
 
   void init(const data_t&) override;
 
   void get_info(opmonlib::InfoCollector&, int /*level*/) override;
 
-  HermesCoreController(const HermesCoreController&) = delete;
-  HermesCoreController& operator=(const HermesCoreController&) = delete;
-  HermesCoreController(HermesCoreController&&) = delete;
-  HermesCoreController& operator=(HermesCoreController&&) = delete;
+  HermesController(const HermesController&) = delete;
+  HermesController& operator=(const HermesController&) = delete;
+  HermesController(HermesController&&) = delete;
+  HermesController& operator=(HermesController&&) = delete;
 
-  ~HermesCoreController() = default;
+  ~HermesController() = default;
 
 private:
-  // Commands HermesCoreController can receive
+  // Commands HermesController can receive
 
   // TO hermesmodules DEVELOPERS: PLEASE DELETE THIS FOLLOWING COMMENT AFTER READING IT
   // For any run control command it is possible for a DAQModule to
   // register an action that will be executed upon reception of the
   // command. do_conf is a very common example of this; in
-  // HermesCoreController.cpp you would implement do_conf so that members of
-  // HermesCoreController get assigned values from a configuration passed as 
+  // HermesController.cpp you would implement do_conf so that members of
+  // HermesController get assigned values from a configuration passed as 
   // an argument and originating from the CCM system.
   // To see an example of this value assignment, look at the implementation of 
-  // do_conf in HermesCoreController.cpp
+  // do_conf in HermesController.cpp
 
   void do_conf(const data_t&);
+
+  std::unique_ptr<HermesCoreController> m_core_controller;
 
   int m_some_configured_value { std::numeric_limits<int>::max() }; // Intentionally-ridiculous value pre-configuration
 
@@ -56,7 +60,7 @@ private:
   // m_total_amount and m_amount_since_last_get_info_call are examples
   // of variables whose values get reported to OpMon
   // (https://github.com/mozilla/opmon) each time get_info() is
-  // called. "amount" represents a (discrete) value which changes as HermesCoreController
+  // called. "amount" represents a (discrete) value which changes as HermesController
   // runs and whose value we'd like to keep track of during running;
   // obviously you'd want to replace this "in real life"
 

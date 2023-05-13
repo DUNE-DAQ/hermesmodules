@@ -124,135 +124,6 @@ class HermesController :
         self.node.getNode('mux.csr.ctrl.sel_buf').write(i)
         self.node.getClient().dispatch()
 
-    
-
-# -----------------------------------------------------------------------------
-# rx_endpoints = {
-#     'np02-srv-001:priv': {
-#         'mac': 0xd85ed38cc4e3,
-#         'ip': 0xc0a80201, # 192.168.2.1
-#         'port': 0x4444,
-#     },
-#     'np02-srv-001-100G': {
-#         'mac': 0x6cfe5447a128,
-#         'ip': 0x0a498b16, # 10.73.139.22
-#         'port': 0x4444,
-#     },
-#     'np04-srv-021-100G': {
-#         'mac': 0xec0d9a8eba10,
-#         'ip': 0x0a49883c, # 10.73.139.16
-#         'port': 0x4444,
-#     },
-# }
-
-# tx_endpoints = {
-#     'np04-zcu-001:priv': {
-#         'mac': 0x000a3504b5f7,
-#         'ip': 0xc0a80202, # 192.168.2.2
-#         'port': 0x4444,
-#     },
-#     'np04-zcu-001-10G': {
-#         'mac': 0x80d3360052ff,
-#         'ip': 0x0a498b17, # 10.73.139.23
-#         'port': 0x4444,
-#     },
-
-#     ### WIB 301
-#     'np04-wib-301-d0': {
-#         'mac': 0x80d336005230,
-#         'ip': 0x0a498b26, # 10.73.139.38
-#         'port': 0x4444,
-#     },
-#     'np04-wib-301-d1': {
-#         'mac': 0x80d336005231,
-#         'ip': 0x0a498b27, # 10.73.139.39
-#         'port': 0x4444,
-#     },
-    
-#     ### WIB 501
-#     'np04-wib-501-d0': {
-#         'mac': 0x80d336005250,
-#         'ip': 0x0a498b1e, # 10.73.139.30
-#         'port': 0x4444,
-#     },
-#     'np04-wib-501-d1': {
-#         'mac': 0x80d336005251,
-#         'ip': 0x0a498b1f, # 10.73.139.31
-#         'port': 0x4444,
-#     },
-
-#     ### WIB 502
-#     'np04-wib-502-d0': {
-#         'mac': 0x80d336005252,
-#         'ip': 0x0a498b20, # 10.73.139.32
-#         'port': 0x4444,
-#     },
-#     'np04-wib-502-d1': {
-#         'mac': 0x80d336005253,
-#         'ip': 0x0a498b21, # 10.73.139.33
-#         'port': 0x4444,
-#     },
-
-
-#     ### WIB 503
-#     'np04-wib-503-d0': {
-#         'mac': 0x80d336005254,
-#         'ip': 0x0a498b18, # 10.73.139.24
-#         'port': 0x4444,
-#     },
-#     'np04-wib-503-d1': {
-#         'mac': 0x80d336005255,
-#         'ip': 0x0a498b19, # 10.73.139.24
-#         'port': 0x4444,
-#     },
-
-
-#     ### WIB 504
-#     'np04-wib-504-d0': {
-#         'mac': 0x80d336005256,
-#         'ip': 0x0a498b18, # 10.73.139.34
-#         'port': 0x4444,
-#     },
-#     'np04-wib-504-d1': {
-#         'mac': 0x80d336005257,
-#         'ip': 0x0a498b19, # 10.73.139.35
-#         'port': 0x4444,
-#     },
-
-#     ### WIB 505
-#     'np04-wib-505-d0': {
-#         'mac': 0x80d336005258,
-#         'ip': 0x0a498b1c, # 10.73.139.28
-#         'port': 0x4444,
-#     },
-#     'np04-wib-505-d1': {
-#         'mac': 0x80d336005259,
-#         'ip': 0x0a498b1d, # 10.73.139.29
-#         'port': 0x4444,
-#     }
-# }
-
-
-ctrl_hosts = [
-    'np04-zcu-001',
-    'np04-wib-301',
-    'np04-wib-302',
-    'np04-wib-303',
-    'np04-wib-304',
-    'np04-wib-305',
-
-    'np04-wib-401',
-    'np04-wib-402',
-    'np04-wib-403',
-    'np04-wib-404',
-    'np04-wib-405',
-    
-    'np04-wib-501',
-    'np04-wib-502',
-    'np04-wib-503',
-    'np04-wib-504',
-    'np04-wib-505',
-]
 
 # N_MGT=4
 # N_SRC=8
@@ -260,47 +131,76 @@ ctrl_hosts = [
 MAX_MGT=2
 MAX_SRCS_P_MGT =16
 mgts_all = tuple(str(i) for i in range(MAX_MGT))
+# 
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
-class CrappyObj:
-    pass
+# DEFAULT_MAP = {'connections': '${HERMESMODULES_SHARE}/config/etc/connections.xml'}
+# CONTEXT_SETTINGS = {
+#     'help_option_names': ['-h', '--help'],
+#     'default_map': DEFAULT_MAP,
+#     }
 
-@click.group(chain=True)
-@click.argument('ctrl_id', type=click.Choice(ctrl_hosts))
-@click.pass_context
-def cli(ctx, ctrl_id):
-    obj = CrappyObj
+# -----------------
+def validate_device(ctx, param, value):
+    lDevices = ctx.obj.cm.getDevices()
+    if value and (value not in lDevices):
+        raise click.BadParameter(
+            'Device must be one of '+
+            ', '.join(["'"+lId+"'" for lId in lDevices])
+            )
+    return value
+# -----------------
 
-    uhal.setLogLevelTo(uhal.LogLevel.WARNING)
+class HermesCliObj:
+    
+    def __init__(self):
+        uhal.setLogLevelTo(uhal.LogLevel.WARNING)
+        self.cm  = uhal.ConnectionManager('file://${HERMESMODULES_SHARE}/config/c.xml')
+        self.hw = None
+        self.ctrl_id = None
+        self._controller = None
 
-    cm  = uhal.ConnectionManager('file://${CRAPPYZCU_SHARE}/config/c.xml')
-    hw = cm.getDevice(ctrl_id)
+    @property
+    def hermes(self):
+        if self._controller is None:
+            hw = self.cm.getDevice(self.ctrl_id)
 
-    # Identify board
-    is_zcu = hw.getNodes('tx.info')
-    is_wib = hw.getNodes('info')
+            # Identify board
+            is_zcu = hw.getNodes('tx.info')
+            is_wib = hw.getNodes('info')
 
-    if is_zcu:
-        print("zcu mode")
-        tx_mux = hw.getNode('tx')
-    elif is_wib:
-        print("wib mode")
-        tx_mux = hw.getNode()
-    else:
-        raise ValueError(f"{ctrl_id} is neither a zcu nor a wib")
+            if is_zcu:
+                print("zcu mode")
+                tx_mux = hw.getNode('tx')
+            elif is_wib:
+                print("wib mode")
+                tx_mux = hw.getNode()
+            else:
+                raise ValueError(f"{ctrl_id} is neither a zcu nor a wib")
 
-    obj.hw = hw
-    obj.hermes = HermesController(tx_mux)
+            self.hw = hw
+            self._controller = HermesController(tx_mux)
 
-    ctx.obj = obj
+        return self._controller        
+
+
+@click.group(chain=True, context_settings=CONTEXT_SETTINGS)
+@click.option('-d', '--device', callback=validate_device, help="IPBus device")
+# @click.pass_context
+@click.pass_obj
+def cli(obj, device):
+
+    obj.ctrl_id = device
 
 @cli.command()
-def addrbook():
+@click.pass_obj
+def addrbook(obj):
 
     t = Table(title="Control hosts")
     t.add_column('name')
-    t.add_column('addrtable', style='green')
-    for h,a in ctrl_hosts.items():
-        t.add_row(h, a)
+    # t.add_column('addrtable', style='green')
+    for h in obj.cm.getDevices():
+        t.add_row(h)
     print(t)
 
     t = Table(title="Receivers")
@@ -309,7 +209,7 @@ def addrbook():
     t.add_column('ip', style='blue')
     t.add_column('port', style='blue')
     for h,d in rx_endpoints.items():
-        t.add_row(h, f"0x{d['mac']:012x}", f"0x{d['ip']:08x}", str(d['port']))
+        t.add_row(h, f"0x{d['mac']:012x}", f"{d['ip']}", str(d['port']))
     print(t)
 
     t = Table(title="Transmitters")
@@ -318,7 +218,7 @@ def addrbook():
     t.add_column('ip', style='blue')
     t.add_column('port', style='blue')
     for h,d in tx_endpoints.items():
-        t.add_row(h, f"0x{d['mac']:012x}", f"0x{d['ip']:08x}", str(d['port']))
+        t.add_row(h, f"0x{d['mac']:012x}", f"{d['ip']}", str(d['port']))
     print(t)
 
 
@@ -711,4 +611,4 @@ if __name__ == '__main__':
     logging.basicConfig(
         level="INFO", format=FORMAT, datefmt="[%X]", handlers=[RichHandler()]
     )
-    cli()
+    cli(obj=HermesCliObj())

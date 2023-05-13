@@ -10,7 +10,7 @@
   },
 
   "hermesmodules": {
-    "num_hermescorecontrollers": 2,
+    "num_hermescontrollers": 2,
     "some_configured_value": 27182
   }
 }

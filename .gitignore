@@ -1,0 +1,7 @@
+__pycache__
+venv
+build
+*.pyc
+*.d
+*.o
+hermes_udp_srv

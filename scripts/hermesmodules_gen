@@ -3,12 +3,15 @@
 import click
 import json
 import os
+from pathlib import Path
 from rich.console import Console
 
 from daqconf.core.conf_utils import make_app_command_data
 from daqconf.core.config_file import generate_cli_from_schema
 from daqconf.core.metadata import write_metadata_file
 from daqconf.core.system import System
+
+import daqconf.detreadoutmap as dromap
 
 console = Console()
 
@@ -20,14 +23,20 @@ moo.io.default_load_path = get_moo_model_path()
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @generate_cli_from_schema('hermesmodules/confgen.jsonnet', 'hermesmodules_gen')
+@click.option('--detector-readpout-map-file', default=None, help="File containing detector hardware map for configuration to run")
+@click.option('--debug', default=False, is_flag=True, help="Switch to get a lot of printout and dot files")
 @click.argument('json_dir', type=click.Path())
-def cli(config, json_dir):
+def cli(config, detector_readpout_map_file, debug, json_dir):
 
-    if os.path.exists(json_dir):
-        raise RuntimeError(f"Directory {json_dir} already exists")
+    output_dir = Path(json_dir)
+    if output_dir.exists():
+        raise RuntimeError(f"Directory {output_dir} already exists")
 
-    config_data = config[0]
-    config_file = config[1]
+    debug_dir = output_dir / 'debug'
+    if debug:
+        debug_dir.mkdir(parents=True)
+
+    config_data, config_file = config
 
     #console.log(f"\nTotal configuration for this app before any overrides: {config_data.pod()}")
 
@@ -53,14 +62,19 @@ def cli(config, json_dir):
     console.log(f"hermesmodules configuration object: {hermesmodules.pod()}")	
 
     console.log("Loading hermesmodulesapp config generator")
-    from hermesmodules import hermesmodulesapp_gen
+    from hermesmodules import hermescoreapp_gen
+    
+    dro_map = dromap.DetReadoutMapService()
+    dro_map.load(detector_readpout_map_file)
 
     the_system = System()
     
-    the_system.apps["hermesmodulesapp"] = hermesmodulesapp_gen.get_hermesmodules_app(
-        nickname = "the_solo_app", 
-	num_hermescorecontrollers = hermesmodules.num_hermescorecontrollers,
-	some_configured_value = hermesmodules.some_configured_value
+    the_system.apps["hermes"] = hermescoreapp_gen.get_hermescore_app(
+        name = "hermes",
+        host = "np04-srv-015",
+        dro_map=dro_map
+	    # num_hermescontrollers = hermesmodules.num_hermescontrollers,
+	    # some_configured_value = hermesmodules.some_configured_value
     )
 
     ####################################################################                                  
@@ -83,6 +97,10 @@ def cli(config, json_dir):
     console.log(f"hermesmodules app config generated in {json_dir}")
 
     write_metadata_file(json_dir, "hermesmodules_gen", config_file)
+
+    if debug:
+        for name in the_system.apps:
+            the_system.apps[name].export(debug_dir / f"{name}.dot")
 
 if __name__ == "__main__":
     try:

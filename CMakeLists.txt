@@ -15,6 +15,9 @@ find_package(daq-cmake REQUIRED)
 daq_setup_environment()
 
 
+find_package(fmt REQUIRED)
+find_package(uhal REQUIRED)
+find_package(ers REQUIRED)
 find_package(appfwk REQUIRED)
 find_package(opmonlib REQUIRED)
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
@@ -24,15 +27,15 @@ find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 
 # See https://dune-daq-sw.readthedocs.io/en/latest/packages/daq-cmake/#daq_codegen
 
-daq_codegen(hermescorecontroller.jsonnet TEMPLATES Structs.hpp.j2 Nljs.hpp.j2)
-daq_codegen(hermescorecontrollerinfo.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.j2 opmonlib/InfoNljs.hpp.j2)
+daq_codegen(hermescontroller.jsonnet TEMPLATES Structs.hpp.j2 Nljs.hpp.j2)
+daq_codegen(hermescontrollerinfo.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.j2 opmonlib/InfoNljs.hpp.j2)
 
 ##############################################################################
 
 
 # See https://dune-daq-sw.readthedocs.io/en/latest/packages/daq-cmake/#daq_add_library
 
-daq_add_library( LINK_LIBRARIES ) # Any source files and/or dependent libraries to link in not yet determined
+daq_add_library(*.cpp LINK_LIBRARIES fmt::fmt ers::ers uhal::uhal) # Any source files and/or dependent libraries to link in not yet determined
 
 ##############################################################################
 
@@ -48,7 +51,7 @@ daq_add_python_bindings(*.cpp LINK_LIBRARIES ${PROJECT_NAME} ) # Any additional 
 
 # See https://dune-daq-sw.readthedocs.io/en/latest/packages/daq-cmake/#daq_add_plugin
 
-daq_add_plugin(HermesCoreController duneDAQModule LINK_LIBRARIES appfwk::appfwk) # Replace appfwk library with a more specific library when appropriate
+daq_add_plugin(HermesController duneDAQModule LINK_LIBRARIES appfwk::appfwk hermesmodules) # Replace appfwk library with a more specific library when appropriate
 
 ##############################################################################
 

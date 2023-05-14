@@ -96,10 +96,6 @@ HermesController::do_conf(const data_t& conf_as_json)
 
   // Size check on link conf
   if ( conf.links.size() != core_info.n_mgt ) {
-    // fmt::print("ERROR: Number of links in configuration ({}) and firmware ({}) don't match",conf.links.size(), core_info.n_mgt);
-    // std::cout << std::flush;
-    // FIXME : ERS exception here
-    // assert(false);
     throw FirmwareConfigLinkMismatch(ERS_HERE, conf.links.size(), core_info.n_mgt);
   }
 
@@ -111,8 +107,6 @@ HermesController::do_conf(const data_t& conf_as_json)
 
   // Look duplicate link ids
   if ( ids.size() != conf.links.size() ) {
-    // FIXME : ERS exception here
-    // assert(false);
     throw DuplicatedLinkIDs(ERS_HERE, conf.links.size(), ids.size());
   }
 
@@ -139,11 +133,11 @@ HermesController::do_conf(const data_t& conf_as_json)
   for( const auto& l : conf.links) {
     m_core_controller->config_udp(
       l.id,
-      ether_atou64(l.src_mac),
-      inet_addr(l.src_ip.c_str()),
+      (__builtin_bswap64(ether_atou64(l.src_mac)) >> 16),
+      __builtin_bswap32(inet_addr(l.src_ip.c_str())),
       port,
-      ether_atou64(l.dst_mac),
-      inet_addr(l.dst_ip.c_str()),
+      (__builtin_bswap64(ether_atou64(l.dst_mac)) >> 16),
+      __builtin_bswap32(inet_addr(l.dst_ip.c_str())),
       port,
       filter_control
     );

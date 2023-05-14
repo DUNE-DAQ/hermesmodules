@@ -292,7 +292,7 @@ HermesCoreController::read_link_stats(uint16_t link) {
   auto tx_arp_count = tx_stats.getNode("arp_count").read();
   auto tx_ping_count = tx_stats.getNode("ping_count").read();
   auto tx_udp_count = tx_stats.getNode("udp_count").read();
-  tx_stats.getClient().dispatch();
+  tx_stats  .getClient().dispatch();
 
 
   ls.err = err.value();
@@ -301,12 +301,12 @@ HermesCoreController::read_link_stats(uint16_t link) {
   ls.udp_rdy = udp_rdy.value();
 
   ls.rcvd_arp_count = rx_arp_count.value();
-  ls.rcvd_arp_count = rx_arp_count.value();
-  ls.rcvd_arp_count = rx_arp_count.value();
+  ls.rcvd_ping_count = rx_ping_count.value();
+  ls.rcvd_udp_count = rx_udp_count.value();
 
   ls.sent_arp_count = tx_arp_count.value();
-  ls.sent_arp_count = tx_arp_count.value();
-  ls.sent_arp_count = tx_arp_count.value();
+  ls.sent_ping_count = tx_ping_count.value();
+  ls.sent_udp_count = tx_udp_count.value();
 
   return ls;
 

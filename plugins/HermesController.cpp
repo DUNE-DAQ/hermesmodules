@@ -50,11 +50,29 @@ HermesController::init(const data_t& /* structured args */)
 void
 HermesController::get_info(opmonlib::InfoCollector& ci, int /* level */)
 {
+
+  
   hermescontrollerinfo::Info info;
   info.total_amount = m_total_amount;
   info.amount_since_last_get_info_call = m_amount_since_last_get_info_call.exchange(0);
 
   ci.add(info);
+
+  const auto& core_info = m_core_controller->get_info();
+
+  for ( uint16_t i(0); i<core_info.n_mgt; ++i){
+    // Create a sub-collector per linkg
+    opmonlib::InfoCollector link_ci;
+    
+    hermescontrollerinfo::LinkStats link_stats;
+
+
+    // get link statis
+    link_ci.add(m_core_controller->read_link_stats(i));
+
+    // 
+    ci.add(fmt::format("link_{}",i), link_ci);
+  }
 }
 
 void
@@ -78,10 +96,11 @@ HermesController::do_conf(const data_t& conf_as_json)
 
   // Size check on link conf
   if ( conf.links.size() != core_info.n_mgt ) {
-    fmt::print("ERROR: Number of links in configuration ({}) and firmware ({}) don't match",conf.links.size(), core_info.n_mgt);
-    std::cout << std::flush;
+    // fmt::print("ERROR: Number of links in configuration ({}) and firmware ({}) don't match",conf.links.size(), core_info.n_mgt);
+    // std::cout << std::flush;
     // FIXME : ERS exception here
-    assert(false);
+    // assert(false);
+    throw FirmwareConfigLinkMismatch(ERS_HERE, conf.links.size(), core_info.n_mgt);
   }
 
   // Sequence id check
@@ -93,7 +112,8 @@ HermesController::do_conf(const data_t& conf_as_json)
   // Look duplicate link ids
   if ( ids.size() != conf.links.size() ) {
     // FIXME : ERS exception here
-    assert(false);
+    // assert(false);
+    throw DuplicatedLinkIDs(ERS_HERE, conf.links.size(), ids.size());
   }
 
   // Make sure that the last link id is n_mgt-1
@@ -137,9 +157,14 @@ HermesController::do_conf(const data_t& conf_as_json)
 
   }
 
-  for ( uint16_t i(0); i<m_core_controller->get_info().n_mgt; ++i){
+  for ( uint16_t i(0); i<core_info.n_mgt; ++i){
     // Put the endpoint in a safe state
     m_core_controller->enable(i, true);
+  }
+
+  for ( uint16_t i(0); i<core_info.n_mgt; ++i){
+    // Put the endpoint in a safe state
+    m_core_controller->is_link_in_error(i);
   }
   
 

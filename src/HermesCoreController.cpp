@@ -32,15 +32,29 @@ HermesCoreController::load_hw_info() {
       throw MagicNumberError(ERS_HERE, magic.value(),0xdeadbeef);
   }
 
+
+  auto design = m_tx_mux.getNode("info.versions.design").read();
+  auto major = m_tx_mux.getNode("info.versions.major").read();
+  auto minor = m_tx_mux.getNode("info.versions.minor").read();
+  auto patch = m_tx_mux.getNode("info.versions.patch").read();
+
+
   auto n_mgt = m_tx_mux.getNode("info.generics.n_mgts").read();
   auto n_src = m_tx_mux.getNode("info.generics.n_srcs").read();
   auto ref_freq = m_tx_mux.getNode("info.generics.ref_freq").read();
   m_tx_mux.getClient().dispatch();
 
+  // Version
+  m_core_info.design = design.value();
+  m_core_info.major = major.value();
+  m_core_info.minor = minor.value();
+  m_core_info.patch = patch.value();
+
   // Generics
   m_core_info.n_mgt = n_mgt.value();
   m_core_info.n_src = n_src.value();
   m_core_info.ref_freq = ref_freq.value();
+
   // Extra info
   m_core_info.srcs_per_mux = m_core_info.n_src/m_core_info.n_mgt;
 
@@ -103,12 +117,29 @@ HermesCoreController::reset(bool nuke) {
 
 
 //-----------------------------------------------------------------------------
+bool
+HermesCoreController::is_link_in_error(uint16_t link, bool do_throw) {
+
+  this->sel_tx_mux(link);
+
+  auto err = m_tx_mux.getNode("mux.csr.stat.err").read();
+  auto eth_rdy = m_tx_mux.getNode("mux.csr.stat.eth_rdy").read();
+  auto src_rdy = m_tx_mux.getNode("mux.csr.stat.src_rdy").read();
+  auto udp_rdy = m_tx_mux.getNode("mux.csr.stat.udp_rdy").read();
+  m_tx_mux.getClient().dispatch();
+
+  bool is_error = (err || !eth_rdy || !src_rdy || !udp_rdy);
+
+  if ( do_throw && is_error ) {
+    throw LinkInError(ERS_HERE, link, err, eth_rdy, src_rdy, udp_rdy);
+  }
+
+  return is_error;
+}
+
+//-----------------------------------------------------------------------------
 void
 HermesCoreController::enable(uint16_t link, bool enable) {
-
-  if (link >= m_core_info.n_mgt) {
-    throw LinkDoesNotExist(ERS_HERE, link);
-  }
 
   this->sel_tx_mux(link);
 
@@ -234,8 +265,50 @@ HermesCoreController::config_fake_src(uint16_t link, uint16_t n_src, uint16_t da
 }
 
 //-----------------------------------------------------------------------------
-void
-HermesCoreController::read_stats() {
+hermescontrollerinfo::LinkStats
+HermesCoreController::read_link_stats(uint16_t link) {
+  this->sel_tx_mux(link);
+
+
+  hermescontrollerinfo::LinkStats ls;
+
+  const auto& mux_stats = m_tx_mux.getNode("mux.csr.stat");
+  auto err = mux_stats.getNode("err").read();
+  auto eth_rdy = mux_stats.getNode("eth_rdy").read();
+  auto src_rdy = mux_stats.getNode("src_rdy").read();
+  auto udp_rdy = mux_stats.getNode("udp_rdy").read();
+  mux_stats.getClient().dispatch();
+
+  const auto& udp_ctrl = m_tx_mux.getNode(fmt::format("udp.udp_core_{}.udp_core_control", link));
+  const auto& rx_stats = udp_ctrl.getNode("rx_packet_counters");
+
+  auto rx_arp_count = rx_stats.getNode("arp_count").read();
+  auto rx_ping_count = rx_stats.getNode("ping_count").read();
+  auto rx_udp_count = rx_stats.getNode("udp_count").read();
+  rx_stats.getClient().dispatch();
+
+  const auto& tx_stats = udp_ctrl.getNode("tx_packet_counters");
+
+  auto tx_arp_count = tx_stats.getNode("arp_count").read();
+  auto tx_ping_count = tx_stats.getNode("ping_count").read();
+  auto tx_udp_count = tx_stats.getNode("udp_count").read();
+  tx_stats.getClient().dispatch();
+
+
+  ls.err = err.value();
+  ls.eth_rdy = eth_rdy.value();
+  ls.src_rdy = src_rdy.value();
+  ls.udp_rdy = udp_rdy.value();
+
+  ls.rcvd_arp_count = rx_arp_count.value();
+  ls.rcvd_arp_count = rx_arp_count.value();
+  ls.rcvd_arp_count = rx_arp_count.value();
+
+  ls.sent_arp_count = tx_arp_count.value();
+  ls.sent_arp_count = tx_arp_count.value();
+  ls.sent_arp_count = tx_arp_count.value();
+
+  return ls;
 
 }
 

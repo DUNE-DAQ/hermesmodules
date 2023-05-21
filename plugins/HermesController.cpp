@@ -22,6 +22,7 @@
 
 namespace dunedaq::hermesmodules {
 
+//-----------------------------------------------------------------------------
 uint64_t ether_atou64( const std::string& addr_str ) {
     union {
         uint64_t          result;
@@ -32,31 +33,60 @@ uint64_t ether_atou64( const std::string& addr_str ) {
     if( !ptr ) {
         return (~0);
     }
-    return result;
+    // Big to little endian
+    return (__builtin_bswap64(result) >> 16);
 }
 
+//-----------------------------------------------------------------------------
+uint32_t ip_atou32(const std::string& addr_str) {
+  // Big to little endian
+  return __builtin_bswap32(inet_addr(addr_str.c_str()));
+}
+
+//-----------------------------------------------------------------------------
 HermesController::HermesController(const std::string& name)
   : dunedaq::appfwk::DAQModule(name)
 {
   register_command("conf", &HermesController::do_conf);
 }
 
+//-----------------------------------------------------------------------------
 void
 HermesController::init(const data_t& /* structured args */)
 {
   uhal::setLogLevelTo(uhal::Error());
 }
 
+//-----------------------------------------------------------------------------
 void
 HermesController::get_info(opmonlib::InfoCollector& ci, int /* level */)
 {
+
+  
   hermescontrollerinfo::Info info;
   info.total_amount = m_total_amount;
   info.amount_since_last_get_info_call = m_amount_since_last_get_info_call.exchange(0);
 
   ci.add(info);
+
+  const auto& core_info = m_core_controller->get_info();
+
+  for ( uint16_t i(0); i<core_info.n_mgt; ++i){
+    // Create a sub-collector per linkg
+    opmonlib::InfoCollector link_ci;
+    
+    hermescontrollerinfo::LinkStats link_stats;
+
+
+    // get link statis
+    link_ci.add(m_core_controller->read_link_stats(i));
+
+    // 
+    ci.add(fmt::format("link_{}",i), link_ci);
+  }
 }
 
+//-----------------------------------------------------------------------------
 void
 HermesController::do_conf(const data_t& conf_as_json)
 { 
@@ -78,10 +108,7 @@ HermesController::do_conf(const data_t& conf_as_json)
 
   // Size check on link conf
   if ( conf.links.size() != core_info.n_mgt ) {
-    fmt::print("ERROR: Number of links in configuration ({}) and firmware ({}) don't match",conf.links.size(), core_info.n_mgt);
-    std::cout << std::flush;
-    // FIXME : ERS exception here
-    assert(false);
+    throw FirmwareConfigLinkMismatch(ERS_HERE, conf.links.size(), core_info.n_mgt);
   }
 
   // Sequence id check
@@ -92,8 +119,7 @@ HermesController::do_conf(const data_t& conf_as_json)
 
   // Look duplicate link ids
   if ( ids.size() != conf.links.size() ) {
-    // FIXME : ERS exception here
-    assert(false);
+    throw DuplicatedLinkIDs(ERS_HERE, conf.links.size(), ids.size());
   }
 
   // Make sure that the last link id is n_mgt-1
@@ -115,16 +141,15 @@ HermesController::do_conf(const data_t& conf_as_json)
 
   // FIXME: What the hell is this again?
   uint32_t filter_control = 0x07400307;
-  uint32_t port = 0x4444;
   for( const auto& l : conf.links) {
     m_core_controller->config_udp(
       l.id,
       ether_atou64(l.src_mac),
-      inet_addr(l.src_ip.c_str()),
-      port,
+      ip_atou32(l.src_ip),
+      conf.port,
       ether_atou64(l.dst_mac),
-      inet_addr(l.dst_ip.c_str()),
-      port,
+      ip_atou32(l.dst_ip),
+      conf.port,
       filter_control
     );
 
@@ -137,11 +162,15 @@ HermesController::do_conf(const data_t& conf_as_json)
 
   }
 
-  for ( uint16_t i(0); i<m_core_controller->get_info().n_mgt; ++i){
+  for ( uint16_t i(0); i<core_info.n_mgt; ++i){
     // Put the endpoint in a safe state
     m_core_controller->enable(i, true);
   }
-  
+
+  for ( uint16_t i(0); i<core_info.n_mgt; ++i){
+    // Put the endpoint in a safe state
+    m_core_controller->is_link_in_error(i);
+  }
 
 }
 

@@ -12,6 +12,20 @@ local info = {
     boolean:  s.boolean( "Boolean",                doc="A boolean"),
     string:   s.string(  "String",                 doc="A string"),   
 
+
+    linkk_info: s.record("LinkStats",[
+        s.field("err", self.boolean),
+        s.field("eth_rdy", self.boolean),
+        s.field("src_rdy", self.boolean),
+        s.field("udp_rdy", self.boolean),
+        s.field("sent_arp_count", self.uint4),
+        s.field("sent_ping_count", self.uint4),
+        s.field("sent_udp_count", self.uint4),
+        s.field("rcvd_arp_count", self.uint4),
+        s.field("rcvd_ping_count", self.uint4),
+        s.field("rcvd_udp_count", self.uint4),        
+    ],doc="Information about hermes link"),
+
     info: s.record("Info", [
        s.field("total_amount",                    self.int8, doc="Total count of some discrete value we care about"),
        s.field("amount_since_last_get_info_call", self.int4, doc="Change in this discrete value since the last report"),

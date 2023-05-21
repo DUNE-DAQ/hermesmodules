@@ -15,6 +15,8 @@
 #include "hermesmodules/HermesCoreController.hpp"
 
 namespace py = pybind11;
+using namespace pybind11::literals; 
+
 
 namespace dunedaq::hermesmodules::python {
 
@@ -27,11 +29,12 @@ register_hermescorecontroller(py::module& m)
     .def("sel_tx_mux", &HermesCoreController::sel_tx_mux)
     .def("sel_tx_mux_buf", &HermesCoreController::sel_tx_mux_buf)
     .def("reset", &HermesCoreController::reset)
+    .def("is_link_in_error", &HermesCoreController::is_link_in_error, "link"_a, "do_throw"_a = false)
     .def("enable", &HermesCoreController::enable)
     .def("config_mux", &HermesCoreController::config_mux)
     .def("config_udp", &HermesCoreController::config_udp)
     .def("config_fake_src", &HermesCoreController::config_fake_src)
-    .def("read_stats", &HermesCoreController::read_stats)
+    .def("read_link_stats", &HermesCoreController::read_link_stats)
 
     // .def("get_attribute",
     //      py::overload_cast<const std::string&>

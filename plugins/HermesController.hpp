@@ -19,7 +19,21 @@
 
 #include "hermesmodules/HermesCoreController.hpp"
 
-namespace dunedaq::hermesmodules {
+namespace dunedaq { 
+
+ERS_DECLARE_ISSUE(hermesmodules,
+                  FirmwareConfigLinkMismatch,
+                  "Number of links in configuration ("<< cfg_n_links << ") and firmware (" << fw_n_links << ") don't match",
+                  ((uint16_t)cfg_n_links)((uint16_t)fw_n_links)
+                  );
+
+ERS_DECLARE_ISSUE(hermesmodules,
+                  DuplicatedLinkIDs,
+                  "Duplicated link ids detected ( number of links in config: "<< cfg_n_links << " but only " << cfg_n_links_unique << ") are uniqe)",
+                  ((uint16_t)cfg_n_links)((uint16_t)cfg_n_links_unique)
+                  );
+
+namespace hermesmodules {
 
 class HermesController : public dunedaq::appfwk::DAQModule
 {
@@ -54,8 +68,6 @@ private:
 
   std::unique_ptr<HermesCoreController> m_core_controller;
 
-  int m_some_configured_value { std::numeric_limits<int>::max() }; // Intentionally-ridiculous value pre-configuration
-
   // TO hermesmodules DEVELOPERS: PLEASE DELETE THIS FOLLOWING COMMENT AFTER READING IT 
   // m_total_amount and m_amount_since_last_get_info_call are examples
   // of variables whose values get reported to OpMon
@@ -68,6 +80,8 @@ private:
   std::atomic<int>     m_amount_since_last_get_info_call {0};
 };
 
-} // namespace dunedaq::hermesmodules
+
+} // namespace hermesmodules
+} // namespace dunedaq
 
 #endif // HERMESMODULES_PLUGINS_HERMESCORECONTROLLER_HPP_

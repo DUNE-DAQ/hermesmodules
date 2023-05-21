@@ -39,6 +39,9 @@ def get_hermescore_app(
     Here the configuration for an entire daq_application instance using DAQModules from hermesmodules is generated.
     """
 
+    # UDP port - hardocoded for now
+    UDP_PORT=0x4444
+
     addrtab = "file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.1/tx_mux_wib.xml"
 
     # Crete a list of relevant stream parameters only
@@ -82,6 +85,7 @@ def get_hermescore_app(
                             conf = hermescontroller.Conf(
                               device = d,
                               geo_info = g,
+                              port = UDP_PORT,
                               links = lm
                               )
                   )]

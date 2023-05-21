@@ -44,8 +44,10 @@ local types = {
     link_conf_map : s.sequence("LinkConfMap", self.link_conf, doc="Link configuration map" ),
 
     conf: s.record("Conf", [
-        s.field("device", self.ipbus_device),
-        s.field("geo_info", self.geo_info),
+        s.field("device", self.ipbus_device, doc="IPBus device connection details"),
+        s.field("geo_info", self.geo_info, doc="Host board geographical information"),
+        s.field("port", self.uint4),
+        // s.field("filter", self.uint4),
         s.field("links", self.link_conf_map),
         // s.field("some_configured_value", self.int4, 999999,doc="This line is where you'd document the value"),
         ],

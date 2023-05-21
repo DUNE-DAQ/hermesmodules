@@ -5,23 +5,34 @@
 #include "ers/Issue.hpp"
 #include "uhal/uhal.hpp"
 
+#include "hermesmodules/hermescontrollerinfo/InfoStructs.hpp"
+
 namespace dunedaq {
 
 ERS_DECLARE_ISSUE(hermesmodules,
                   LinkDoesNotExist,
                   "Hermes Link " << lid << " does not exist",
-                  ((int)lid));
+                  ((int)lid)
+                  );
 
 ERS_DECLARE_ISSUE(hermesmodules,
                   InputBufferDoesNotExist,
                   "Hermes Input Buffer " << bid << " does not exist",
-                  ((int)bid));
+                  ((int)bid)
+                  );
 
 ERS_DECLARE_ISSUE(hermesmodules,
                   MagicNumberError,
                   "Hermes Magic number failed " << found << " (" << expected << ")",
-                  ((int)found)((int)expected));
+                  ((uint32_t)found)((uint32_t)expected)
+                  );
 
+
+ERS_DECLARE_ISSUE(hermesmodules,
+                  LinkInError,
+                  "Hermes Link " << link << " is in error (err:" << err << ", eth_rdy:" << eth_rdy << ", src_rdy:" << src_rdy << ", udp_rdy:" << udp_rdy <<" )",
+                  ((uint16_t)link)((bool)err)((bool)eth_rdy)((bool)src_rdy)((bool)udp_rdy)
+                  );
 
 namespace hermesmodules {
 
@@ -30,6 +41,10 @@ class HermesCoreController {
 public:
 
   struct CoreInfo {
+    uint32_t design;
+    uint32_t major;
+    uint32_t minor;
+    uint32_t patch;
     uint32_t n_mgt;
     uint32_t n_src;
     uint32_t ref_freq;
@@ -47,6 +62,8 @@ public:
 
   void reset(bool nuke=false);
 
+  bool is_link_in_error(uint16_t link, bool do_throw=false);
+
   void enable(uint16_t link, bool enable);
 
   void config_mux(uint16_t link, uint16_t det, uint16_t crate, uint16_t slot);
@@ -55,7 +72,7 @@ public:
 
   void config_fake_src(uint16_t link, uint16_t n_src, uint16_t data_len, uint16_t rate);
 
-  void read_stats();
+  hermescontrollerinfo::LinkStats read_link_stats(uint16_t link);
 
 
 private:

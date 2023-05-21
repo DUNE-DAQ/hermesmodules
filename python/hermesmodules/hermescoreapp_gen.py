@@ -56,7 +56,7 @@ def get_hermescore_app(
           s.config.tx_mac,
           s.config.rx_ip,
           s.config.rx_mac
-        ) for s in dro_map.streams if s.tech == 'eth'
+        ) for s in dro_map.streams if s.kind == 'eth'
         ]))
     
     # group the by actual cores using geoid and host

@@ -10,8 +10,8 @@ from rich import print
 from rich.table import Table
 from rich.logging import RichHandler
 
-from crappyzcu.tx_endpoints import tx_endpoints
-from crappyzcu.rx_endpoints import rx_endpoints
+from hermesmodules.tx_endpoints import tx_endpoints
+from hermesmodules.rx_endpoints import rx_endpoints
 
 
 # from crappyhalclient import CrappyHardwareClient

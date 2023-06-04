@@ -33,6 +33,7 @@ def group_by_key(coll, key):
 def get_hermescore_app(
         name,
         host,
+        addrtab,
         dro_map,
         ):
     """
@@ -42,7 +43,7 @@ def get_hermescore_app(
     # UDP port - hardocoded for now
     UDP_PORT=0x4444
 
-    addrtab = "file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.1/tx_mux_wib.xml"
+    # addrtab = "file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.1/tx_mux_wib.xml"
 
     # Crete a list of relevant stream parameters only
     tx_infos = list(set([

@@ -21,8 +21,8 @@ local cs = {
     monitoring_dest: s.enum( "MonitoringDest", ["local", "cern", "pocket"]),
 
     hermesmodules: s.record("hermesmodules", [
-        s.field( "addrtab", self.string, default="", doc="Hermes core address table"),
         s.field( "host_hermes", self.host, default="np04-srv-016", doc="Hermes application host"),
+        s.field( "addrtab", self.string, default="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.1/tx_mux_wib.xml", doc="Hermes core address table"),
         s.field( "num_hermescontrollers", self.int4, default=1, doc="A value which configures the number of instances of HermesController"),
     ]),
 

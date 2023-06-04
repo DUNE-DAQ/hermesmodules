@@ -33,6 +33,7 @@ def group_by_key(coll, key):
 def get_hermescore_app(
         name,
         host,
+        addrtab,
         dro_map,
         ):
     """
@@ -42,7 +43,7 @@ def get_hermescore_app(
     # UDP port - hardocoded for now
     UDP_PORT=0x4444
 
-    addrtab = "file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.1/tx_mux_wib.xml"
+    # addrtab = "file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.1/tx_mux_wib.xml"
 
     # Crete a list of relevant stream parameters only
     tx_infos = list(set([
@@ -50,12 +51,12 @@ def get_hermescore_app(
           s.geo_id.det_id,
           s.geo_id.crate_id,
           s.geo_id.slot_id,
-          s.config.tx_host,
+          s.parameters.tx_host,
           int(s.geo_id.stream_id > 63), # hack
-          s.config.tx_ip,
-          s.config.tx_mac,
-          s.config.rx_ip,
-          s.config.rx_mac
+          s.parameters.tx_ip,
+          s.parameters.tx_mac,
+          s.parameters.rx_ip,
+          s.parameters.rx_mac
         ) for s in dro_map.streams if s.kind == 'eth'
         ]))
     
@@ -63,7 +64,6 @@ def get_hermescore_app(
     hermes_cores = group_by_key(tx_infos, lambda x: (x[0], x[1], x[2], x[3]))
 
     modules = []
-
     for (det, crate, slot, ctrl_ept), links in hermes_cores.items():
       d = hermescontroller.Device(name=f"hermes_{det}_{crate}_{slot}", uri=f"ipbusudp-2.0://{ctrl_ept}:50001", addrtab=addrtab)
       g = hermescontroller.GeoInfo(det_id=det, crate_id=crate, slot_id=slot)
@@ -76,10 +76,7 @@ def get_hermescore_app(
           dst_ip= rx_ip
         ) for _,_,_,_,link,tx_ip,tx_mac,rx_ip,rx_mac in links]
         )
-          
-            
-            
-
+      
       modules += [DAQModule(name = f"hermes_{det}_{crate}_{slot}", 
                             plugin = "HermesController", 
                             conf = hermescontroller.Conf(

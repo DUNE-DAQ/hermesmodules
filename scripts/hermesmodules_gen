@@ -8,7 +8,7 @@ from rich.console import Console
 
 from daqconf.core.conf_utils import make_app_command_data
 from daqconf.core.config_file import generate_cli_from_schema
-from daqconf.core.metadata import write_metadata_file
+from daqconf.core.metadata import write_metadata_file, write_config_file
 from daqconf.core.system import System
 
 import daqconf.detreadoutmap as dromap
@@ -23,10 +23,10 @@ moo.io.default_load_path = get_moo_model_path()
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @generate_cli_from_schema('hermesmodules/confgen.jsonnet', 'hermesmodules_gen')
-@click.option('--detector-readpout-map-file', default=None, help="File containing detector hardware map for configuration to run")
+@click.option('--detector-readout-map-file', default=None, help="File containing detector hardware map for configuration to run")
 @click.option('--debug', default=False, is_flag=True, help="Switch to get a lot of printout and dot files")
 @click.argument('json_dir', type=click.Path())
-def cli(config, detector_readpout_map_file, debug, json_dir):
+def cli(config, detector_readout_map_file, debug, json_dir):
 
     output_dir = Path(json_dir)
     if output_dir.exists():
@@ -36,7 +36,8 @@ def cli(config, detector_readpout_map_file, debug, json_dir):
     if debug:
         debug_dir.mkdir(parents=True)
 
-    config_data, config_file = config
+    config_data = config[0]
+    config_file = Path(config[1])
 
     #console.log(f"\nTotal configuration for this app before any overrides: {config_data.pod()}")
 
@@ -65,16 +66,14 @@ def cli(config, detector_readpout_map_file, debug, json_dir):
     from hermesmodules import hermescoreapp_gen
     
     dro_map = dromap.DetReadoutMapService()
-    dro_map.load(detector_readpout_map_file)
+    dro_map.load(detector_readout_map_file)
 
     the_system = System()
     
     the_system.apps["hermes"] = hermescoreapp_gen.get_hermescore_app(
         name = "hermes",
-        host = "np04-srv-015",
+        host = hermesmodules.host_hermes,
         dro_map=dro_map
-	    # num_hermescontrollers = hermesmodules.num_hermescontrollers,
-	    # some_configured_value = hermesmodules.some_configured_value
     )
 
     ####################################################################                                  
@@ -96,8 +95,13 @@ def cli(config, detector_readpout_map_file, debug, json_dir):
 
     console.log(f"hermesmodules app config generated in {json_dir}")
 
-    write_metadata_file(json_dir, "hermesmodules_gen", config_file)
-
+    write_metadata_file(json_dir, "hermesmodules_gen", config_file.as_posix())
+    write_config_file(
+        output_dir,
+        config_file.name if config_file else "default.json",
+        config_data
+    )
+    
     if debug:
         for name in the_system.apps:
             the_system.apps[name].export(debug_dir / f"{name}.dot")

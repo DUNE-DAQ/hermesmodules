@@ -16,11 +16,13 @@ local cs = {
     float4 :  s.number(  "float4",  "f4",          doc="A float of 4 bytes"),
     double8 : s.number(  "double8", "f8",          doc="A double of 8 bytes"),
     boolean:  s.boolean( "Boolean",                doc="A boolean"),
-    string:   s.string(  "String",   		   doc="A string"),   
-    monitoring_dest: s.enum(     "MonitoringDest", ["local", "cern", "pocket"]),
+    string:   s.string(  "String",   		       doc="A string"),   
+    host:     s.string(  "Host",    moo.re.dnshost, doc="A hostname"),
+    monitoring_dest: s.enum( "MonitoringDest", ["local", "cern", "pocket"]),
 
     hermesmodules: s.record("hermesmodules", [
         s.field( "addrtab", self.string, default="", doc="Hermes core address table"),
+        s.field( "host_hermes", self.host, default="np04-srv-016", doc="Hermes application host"),
         s.field( "num_hermescontrollers", self.int4, default=1, doc="A value which configures the number of instances of HermesController"),
     ]),
 

@@ -23,14 +23,37 @@ moo.io.default_load_path = get_moo_model_path()
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @generate_cli_from_schema('hermesmodules/confgen.jsonnet', 'hermesmodules_gen')
-@click.option('--detector-readout-map-file', default=None, help="File containing detector hardware map for configuration to run")
+@click.option('--force-pm', default=None, type=click.Choice(['ssh', 'k8s']), help="Force process manager")
+@click.option('-m', '--detector-readout-map-file', default=None, help="File containing detector detector-readout map for configuration to run")
+@click.option('-a', '--only-check-args', default=False, is_flag=True, help="Dry run, do not generate output files")
+@click.option('-n', '--dry-run', default=False, is_flag=True, help="Dry run, do not generate output files")
+@click.option('-f', '--force', default=False, is_flag=True, help="Force configuration generation - delete ")
 @click.option('--debug', default=False, is_flag=True, help="Switch to get a lot of printout and dot files")
 @click.argument('json_dir', type=click.Path())
-def cli(config, detector_readout_map_file, debug, json_dir):
+def cli(
+    config,
+    force_pm,
+    detector_readpout_map_file,
+    only_check_args,
+    dry_run,
+    force,
+    debug,
+    json_dir
+    ):
 
+    if only_check_args:
+        return
+    
     output_dir = Path(json_dir)
     if output_dir.exists():
-        raise RuntimeError(f"Directory {output_dir} already exists")
+        if dry_run:
+            pass
+        elif force:
+            console.log(f"Removing existing {output_dir}")
+            # Delete output folder if it exists
+            shutil.rmtree(output_dir)
+        else:
+            raise RuntimeError(f"Directory {output_dir} already exists")
 
     debug_dir = output_dir / 'debug'
     if debug:
@@ -57,6 +80,11 @@ def cli(config, detector_readout_map_file, debug, json_dir):
 
     hermesmodules = confgen.hermesmodules(**config_data.hermesmodules)
     console.log(f"hermesmodules configuration object: {hermesmodules.pod()}")
+
+    # Update with command-line options
+    if force_pm is not None:
+        boot.process_manager = force_pm
+        console.log(f"boot.boot.process_manager set to {boot.process_manager}")
 
     console.log(f"\nIndividual configuration records after any command line overrides: ")
     console.log(f"boot configuration object: {boot.pod()}")

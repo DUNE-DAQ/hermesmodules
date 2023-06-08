@@ -73,7 +73,7 @@ def cli(config, detector_readout_map_file, debug, json_dir):
     the_system.apps["hermes"] = hermescoreapp_gen.get_hermescore_app(
         name = "hermes",
         host = hermesmodules.host_hermes,
-        addrtab = hermesmodules.addrtab
+        addrtab = hermesmodules.addrtab,
         dro_map=dro_map
     )
 

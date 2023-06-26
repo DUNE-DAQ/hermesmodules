@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 import click
-import json
-import os
+import shutil
 from pathlib import Path
 from rich.console import Console
 
@@ -25,7 +24,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @generate_cli_from_schema('hermesmodules/confgen.jsonnet', 'hermesmodules_gen')
 @click.option('--force-pm', default=None, type=click.Choice(['ssh', 'k8s']), help="Force process manager")
 @click.option('-m', '--detector-readout-map-file', default=None, help="File containing detector detector-readout map for configuration to run")
-@click.option('-a', '--only-check-args', default=False, is_flag=True, help="Dry run, do not generate output files")
+@click.option('-a', '--check-args-and-exit', default=False, is_flag=True, help="Check input arguments and quit")
 @click.option('-n', '--dry-run', default=False, is_flag=True, help="Dry run, do not generate output files")
 @click.option('-f', '--force', default=False, is_flag=True, help="Force configuration generation - delete ")
 @click.option('--debug', default=False, is_flag=True, help="Switch to get a lot of printout and dot files")
@@ -33,15 +32,15 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 def cli(
     config,
     force_pm,
-    detector_readpout_map_file,
-    only_check_args,
+    detector_readout_map_file,
+    check_args_and_exit,
     dry_run,
     force,
     debug,
     json_dir
     ):
 
-    if only_check_args:
+    if check_args_and_exit:
         return
     
     output_dir = Path(json_dir)
@@ -60,7 +59,7 @@ def cli(
         debug_dir.mkdir(parents=True)
 
     config_data = config[0]
-    config_file = Path(config[1])
+    config_file = Path(config[1] if config[1] is not None else "hermes_conf.json")
 
     #console.log(f"\nTotal configuration for this app before any overrides: {config_data.pod()}")
 
@@ -70,12 +69,12 @@ def cli(
     moo.otypes.load_types('hermesmodules/confgen.jsonnet')
     import dunedaq.hermesmodules.confgen as confgen
     moo.otypes.load_types('daqconf/confgen.jsonnet')
-    import dunedaq.daqconf.confgen as daqconfgen
+    import dunedaq.daqconf.bootgen as bootgen
 
     console.log(f"\nIndividual configuration records before any command line overrides: ")    
 
     # Copy-of-a-hack, see daqconf's daqconf_multiru_gen file (commit e26a21d54fc5)
-    boot = daqconfgen.boot(**config_data.boot)
+    boot = bootgen.boot(**config_data.boot)
     console.log(f"boot configuration object: {boot.pod()}")
 
     hermesmodules = confgen.hermesmodules(**config_data.hermesmodules)

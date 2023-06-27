@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 import click
-import json
-import os
+import shutil
 from pathlib import Path
 from rich.console import Console
 
@@ -23,21 +22,44 @@ moo.io.default_load_path = get_moo_model_path()
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @generate_cli_from_schema('hermesmodules/confgen.jsonnet', 'hermesmodules_gen')
-@click.option('--detector-readout-map-file', default=None, help="File containing detector hardware map for configuration to run")
+@click.option('--force-pm', default=None, type=click.Choice(['ssh', 'k8s']), help="Force process manager")
+@click.option('-m', '--detector-readout-map-file', default=None, help="File containing detector detector-readout map for configuration to run")
+@click.option('-a', '--check-args-and-exit', default=False, is_flag=True, help="Check input arguments and quit")
+@click.option('-n', '--dry-run', default=False, is_flag=True, help="Dry run, do not generate output files")
+@click.option('-f', '--force', default=False, is_flag=True, help="Force configuration generation - delete ")
 @click.option('--debug', default=False, is_flag=True, help="Switch to get a lot of printout and dot files")
 @click.argument('json_dir', type=click.Path())
-def cli(config, detector_readout_map_file, debug, json_dir):
+def cli(
+    config,
+    force_pm,
+    detector_readout_map_file,
+    check_args_and_exit,
+    dry_run,
+    force,
+    debug,
+    json_dir
+    ):
 
+    if check_args_and_exit:
+        return
+    
     output_dir = Path(json_dir)
     if output_dir.exists():
-        raise RuntimeError(f"Directory {output_dir} already exists")
+        if dry_run:
+            pass
+        elif force:
+            console.log(f"Removing existing {output_dir}")
+            # Delete output folder if it exists
+            shutil.rmtree(output_dir)
+        else:
+            raise RuntimeError(f"Directory {output_dir} already exists")
 
     debug_dir = output_dir / 'debug'
     if debug:
         debug_dir.mkdir(parents=True)
 
     config_data = config[0]
-    config_file = Path(config[1])
+    config_file = Path(config[1] if config[1] is not None else "hermes_conf.json")
 
     #console.log(f"\nTotal configuration for this app before any overrides: {config_data.pod()}")
 
@@ -47,16 +69,21 @@ def cli(config, detector_readout_map_file, debug, json_dir):
     moo.otypes.load_types('hermesmodules/confgen.jsonnet')
     import dunedaq.hermesmodules.confgen as confgen
     moo.otypes.load_types('daqconf/confgen.jsonnet')
-    import dunedaq.daqconf.confgen as daqconfgen
+    import dunedaq.daqconf.bootgen as bootgen
 
     console.log(f"\nIndividual configuration records before any command line overrides: ")    
 
     # Copy-of-a-hack, see daqconf's daqconf_multiru_gen file (commit e26a21d54fc5)
-    boot = daqconfgen.boot(**config_data.boot)
+    boot = bootgen.boot(**config_data.boot)
     console.log(f"boot configuration object: {boot.pod()}")
 
     hermesmodules = confgen.hermesmodules(**config_data.hermesmodules)
     console.log(f"hermesmodules configuration object: {hermesmodules.pod()}")
+
+    # Update with command-line options
+    if force_pm is not None:
+        boot.process_manager = force_pm
+        console.log(f"boot.boot.process_manager set to {boot.process_manager}")
 
     console.log(f"\nIndividual configuration records after any command line overrides: ")
     console.log(f"boot configuration object: {boot.pod()}")

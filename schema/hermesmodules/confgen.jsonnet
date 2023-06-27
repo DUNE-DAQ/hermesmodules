@@ -26,4 +26,4 @@ local cs = {
 };
 
 // Output a topologically sorted array.
-stypes + sboot + moo.oschema.sort_select(cs, ns)
+sboot + stypes + sboot + moo.oschema.sort_select(cs, ns)

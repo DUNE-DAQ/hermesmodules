@@ -35,6 +35,7 @@ local types = {
 
     link_conf: s.record("LinkConf", [
         s.field("id", self.uint4),
+        s.field("enable", self.boolean, true, doc="Enable/disable this link"),
         s.field("src_mac", self.mac, "00:00:00:00:00:00", doc="Reaout Source MAC"),
         s.field("src_ip", self.ipv4, "0.0.0.0", doc="Reaout Source IP"),
         s.field("dst_mac", self.mac,  "00:00:00:00:00:00", doc="Reaout Destination MAC"),

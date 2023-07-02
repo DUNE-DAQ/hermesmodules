@@ -142,6 +142,9 @@ HermesController::do_conf(const data_t& conf_as_json)
   // FIXME: What the hell is this again?
   uint32_t filter_control = 0x07400307;
   for( const auto& l : conf.links) {
+    
+    if ( !l.enable ) continue;
+
     m_core_controller->config_udp(
       l.id,
       ether_atou64(l.src_mac),
@@ -162,15 +165,30 @@ HermesController::do_conf(const data_t& conf_as_json)
 
   }
 
-  for ( uint16_t i(0); i<core_info.n_mgt; ++i){
+  for( const auto& l : conf.links) {
+
+    if ( !l.enable ) continue;
     // Put the endpoint in a safe state
-    m_core_controller->enable(i, true);
+    m_core_controller->enable(l.id, true);
   }
 
-  for ( uint16_t i(0); i<core_info.n_mgt; ++i){
+  for( const auto& l : conf.links) {
+    
+    if ( !l.enable ) continue;
     // Put the endpoint in a safe state
-    m_core_controller->is_link_in_error(i);
+    m_core_controller->is_link_in_error(l.id);
   }
+
+
+  // for ( uint16_t i(0); i<core_info.n_mgt; ++i){
+  //   // Put the endpoint in a safe state
+  //   m_core_controller->enable(i, true);
+  // }
+
+  // for ( uint16_t i(0); i<core_info.n_mgt; ++i){
+  //   // Put the endpoint in a safe state
+  //   m_core_controller->is_link_in_error(i);
+  // }
 
 }
 

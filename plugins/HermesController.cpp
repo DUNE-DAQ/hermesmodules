@@ -48,6 +48,8 @@ HermesController::HermesController(const std::string& name)
   : dunedaq::appfwk::DAQModule(name)
 {
   register_command("conf", &HermesController::do_conf);
+  register_command("start", &HermesController::do_start);
+  register_command("drain_dataflow", &HermesController::do_stop);
 }
 
 //-----------------------------------------------------------------------------
@@ -90,11 +92,11 @@ HermesController::get_info(opmonlib::InfoCollector& ci, int /* level */)
 void
 HermesController::do_conf(const data_t& conf_as_json)
 { 
-  auto conf = conf_as_json.get<hermescontroller::Conf>();
+  m_conf = conf_as_json.get<hermescontroller::Conf>();
 
 
   // Create the ipbus 
-  auto hw = uhal::ConnectionManager::getDevice(conf.device.name, conf.device.uri, conf.device.addrtab);
+  auto hw = uhal::ConnectionManager::getDevice(m_conf.device.name, m_conf.device.uri, m_conf.device.addrtab);
 
   m_core_controller = std::make_unique<HermesCoreController>(hw);
 
@@ -107,19 +109,19 @@ HermesController::do_conf(const data_t& conf_as_json)
 
 
   // Size check on link conf
-  if ( conf.links.size() != core_info.n_mgt ) {
-    throw FirmwareConfigLinkMismatch(ERS_HERE, conf.links.size(), core_info.n_mgt);
+  if ( m_conf.links.size() != core_info.n_mgt ) {
+    throw FirmwareConfigLinkMismatch(ERS_HERE, m_conf.links.size(), core_info.n_mgt);
   }
 
   // Sequence id check
   std::set<uint32_t> ids;
-  for( const auto& l : conf.links) {
+  for( const auto& l : m_conf.links) {
     ids.insert(l.id);
   }
 
   // Look duplicate link ids
-  if ( ids.size() != conf.links.size() ) {
-    throw DuplicatedLinkIDs(ERS_HERE, conf.links.size(), ids.size());
+  if ( ids.size() != m_conf.links.size() ) {
+    throw DuplicatedLinkIDs(ERS_HERE, m_conf.links.size(), ids.size());
   }
 
   // Make sure that the last link id is n_mgt-1
@@ -141,7 +143,7 @@ HermesController::do_conf(const data_t& conf_as_json)
 
   // FIXME: What the hell is this again?
   uint32_t filter_control = 0x07400307;
-  for( const auto& l : conf.links) {
+  for( const auto& l : m_conf.links) {
     
     if ( !l.enable ) continue;
 
@@ -149,34 +151,39 @@ HermesController::do_conf(const data_t& conf_as_json)
       l.id,
       ether_atou64(l.src_mac),
       ip_atou32(l.src_ip),
-      conf.port,
+      m_conf.port,
       ether_atou64(l.dst_mac),
       ip_atou32(l.dst_ip),
-      conf.port,
+      m_conf.port,
       filter_control
     );
 
     m_core_controller->config_mux(
       l.id,
-      conf.geo_info.det_id,
-      conf.geo_info.crate_id,
-      conf.geo_info.slot_id
+      m_conf.geo_info.det_id,
+      m_conf.geo_info.crate_id,
+      m_conf.geo_info.slot_id
     );
 
   }
+}
 
-  for( const auto& l : conf.links) {
+void
+HermesController::do_start(const data_t& /*d*/)
+{
+
+  for( const auto& l : m_conf.links) {
 
     if ( !l.enable ) continue;
     // Put the endpoint in a safe state
     m_core_controller->enable(l.id, true);
   }
 
-  for( const auto& l : conf.links) {
+  for( const auto& l : m_conf.links) {
     
     if ( !l.enable ) continue;
     // Put the endpoint in a safe state
-    m_core_controller->is_link_in_error(l.id);
+    m_core_controller->is_link_in_error(l.id, true);
   }
 
 
@@ -190,6 +197,18 @@ HermesController::do_conf(const data_t& conf_as_json)
   //   m_core_controller->is_link_in_error(i);
   // }
 
+}
+
+void
+HermesController::do_stop(const data_t& /*d*/)
+{
+
+  for( const auto& l : m_conf.links) {
+
+    if ( !l.enable ) continue;
+    // Put the endpoint in a safe state
+    m_core_controller->enable(l.id, false);
+  }
 }
 
 } // namespace dunedaq::hermesmodules

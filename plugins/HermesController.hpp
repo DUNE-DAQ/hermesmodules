@@ -18,6 +18,8 @@
 #include <string>
 
 #include "hermesmodules/HermesCoreController.hpp"
+#include "hermesmodules/hermescontroller/Nljs.hpp"
+#include "hermesmodules/hermescontrollerinfo/InfoNljs.hpp"
 
 namespace dunedaq { 
 
@@ -52,6 +54,8 @@ public:
   ~HermesController() = default;
 
 private:
+
+  hermescontroller::Conf  m_conf;
   // Commands HermesController can receive
 
   // TO hermesmodules DEVELOPERS: PLEASE DELETE THIS FOLLOWING COMMENT AFTER READING IT
@@ -65,6 +69,8 @@ private:
   // do_conf in HermesController.cpp
 
   void do_conf(const data_t&);
+  void do_start(const data_t&);
+  void do_stop(const data_t&);
 
   std::unique_ptr<HermesCoreController> m_core_controller;
 

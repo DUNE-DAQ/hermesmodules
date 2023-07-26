@@ -13,6 +13,7 @@ local info = {
     string:   s.string(  "String",                 doc="A string"),   
 
 
+    // Rename UDPCoreStats?
     linkk_info: s.record("LinkStats",[
         s.field("err", self.boolean),
         s.field("eth_rdy", self.boolean),

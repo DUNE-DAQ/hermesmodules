@@ -49,7 +49,7 @@ HermesController::HermesController(const std::string& name)
 {
   register_command("conf", &HermesController::do_conf);
   register_command("start", &HermesController::do_start);
-  register_command("drain_dataflow", &HermesController::do_stop);
+  register_command("stop", &HermesController::do_stop);
 }
 
 //-----------------------------------------------------------------------------
@@ -74,19 +74,21 @@ HermesController::get_info(opmonlib::InfoCollector& ci, int /* level */)
   const auto& core_info = m_core_controller->get_info();
 
   for ( uint16_t i(0); i<core_info.n_mgt; ++i){
+
+    auto geo_info = m_core_controller->read_link_geo_info(i);
+
     // Create a sub-collector per linkg
     opmonlib::InfoCollector link_ci;
     
     hermescontrollerinfo::LinkStats link_stats;
 
-
     // get link statis
     link_ci.add(m_core_controller->read_link_stats(i));
 
     // 
-    ci.add(fmt::format("link_{}",i), link_ci);
+    ci.add(fmt::format("hermes_det{}_crt{}_slt{}_lnk{}",geo_info.detid, geo_info.crateid, geo_info.slotid, i), link_ci);
   }
-}
+ }
 
 //-----------------------------------------------------------------------------
 void

@@ -51,6 +51,12 @@ public:
     uint32_t srcs_per_mux;
   };
 
+  struct LinkGeoInfo {
+    uint16_t detid;
+    uint16_t crateid;
+    uint16_t slotid;
+  };
+
   explicit HermesCoreController(uhal::HwInterface, std::string tx_mux_id="");
   virtual ~HermesCoreController();
 
@@ -71,6 +77,8 @@ public:
   void config_udp(uint16_t link, uint64_t src_mac, uint32_t src_ip, uint16_t src_port, uint64_t dst_mac, uint32_t dst_ip, uint16_t dst_port, uint32_t filters);
 
   void config_fake_src(uint16_t link, uint16_t n_src, uint16_t data_len, uint16_t rate);
+
+  LinkGeoInfo read_link_geo_info(uint16_t link);
 
   hermescontrollerinfo::LinkStats read_link_stats(uint16_t link);
 

@@ -274,7 +274,7 @@ def enable(obj, enable, buf_en, tx_en, link):
         hrms.get_node('mux.csr.ctrl.tx_en').write(tx_en)
     print()
 
-    if buf_en :
+    if buf_en is not None:
         print(f"- {'Enabling' if buf_en else 'Disabling'} 'input buffers'")
         hrms.get_node('mux.csr.ctrl.en_buf').write(buf_en)
 
@@ -433,13 +433,23 @@ def zcu_src_config(obj, link, en_n_src, dlen, rate_rdx):
 @cli.command("fakesrc-config")
 @click.option('-l', '--link', type=int, default=0)
 @click.option('-n', '--n-src', type=click.IntRange(0, MAX_SRCS_P_MGT), default=1)
+@click.option('-s', '--src', type=click.IntRange(0, MAX_SRCS_P_MGT), default=None, multiple=True)
 @click.option('-k', '--data-len', type=click.IntRange(0, 0xfff), default=0x383)
 @click.option('-r', '--rate-rdx', type=click.IntRange(0, 0x3f), default=0xa)
 @click.pass_obj
-def fakesrc_config(obj, link, n_src, data_len, rate_rdx):
+def fakesrc_config(obj, link, n_src, src, data_len, rate_rdx):
     """Configure trivial data sources"""
 
     hrms = obj.hermes
+
+    all_srcs = set(range(hrms.n_srcs_p_mgt))
+    en_srcs = set(src) 
+
+    if en_srcs != set.intersection(all_srcs, en_srcs):
+        raise ValueError("AAARGH")
+
+    # print(src)
+    # return
 
     hrms.sel_tx_mux(link)
 
@@ -454,7 +464,8 @@ def fakesrc_config(obj, link, n_src, data_len, rate_rdx):
     for src_id in range(hrms.n_srcs_p_mgt):
         hrms.sel_tx_mux_buf(src_id)
 
-        src_en = (src_id<n_src)
+        # src_en = (src_id<n_src)
+        src_en = (src_id in en_srcs)
         print(f'Configuring generator {src_id} : {src_en}')
         # hw.write(f'tx.buf.ctrl.fake_en', src_en)
         hrms.get_node('mux.buf.ctrl.fake_en').write(src_en)

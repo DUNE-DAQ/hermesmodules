@@ -98,10 +98,13 @@ class HermesController :
 
     def sample_ctrs(self, seconds: int):
         self.node.getNode('samp.ctrl.samp').write(True)
-        self.node.getClient().dispatch()
-        time.sleep(seconds)
         self.node.getNode('samp.ctrl.samp').write(False)
         self.node.getClient().dispatch()
+        if seconds:
+            time.sleep(seconds)
+            self.node.getNode('samp.ctrl.samp').write(False)
+            self.node.getNode('samp.ctrl.samp').write(False)
+            self.node.getClient().dispatch()
 
 
     def sel_tx_mux(self, i: int):
@@ -587,9 +590,11 @@ def stats(obj, sel_links, seconds, show_udp, show_buf):
                 s['blk_rej'] = (s['blk_rej_h']<<32)+s['blk_rej_l']
                 s['ts'] = (s['ts_h']<<32)+s['ts_l']
                 s['vol'] = (s['vol_h']<<32)+s['vol_l']
+                s['blk_longlast'] = (s['blk_longlast_h']<<32)+s['blk_longlast_l']
+                s['blk_lastnotval'] = (s['blk_lastnotval_h']<<32)+s['blk_lastnotval_l']
 
                 for k in tuple(s.keys()):
-                    for n in ('blk_acc_', 'blk_oflow_', 'blk_rej_', 'ts_', 'vol_'):
+                    for n in ('blk_acc_', 'blk_oflow_', 'blk_rej_', 'ts_', 'vol_', 'blk_longlast_', 'blk_lastnotval_'):
                         if k.startswith(n):
                             del s[k]
 

@@ -264,11 +264,26 @@ HermesCoreController::config_fake_src(uint16_t link, uint16_t n_src, uint16_t da
   m_tx_mux.getClient().dispatch();
 }
 
+
+//-----------------------------------------------------------------------------
+HermesCoreController::LinkGeoInfo
+HermesCoreController::read_link_geo_info(uint16_t link) {
+
+  this->sel_tx_mux(link);
+
+  auto detid = m_tx_mux.getNode("mux.mux.ctrl.detid").read();
+  auto crate = m_tx_mux.getNode("mux.mux.ctrl.crate").read();
+  auto slot = m_tx_mux.getNode("mux.mux.ctrl.slot").read();
+
+  m_tx_mux.getClient().dispatch();
+
+  return {detid.value(), crate.value(), slot.value()};
+}
+
 //-----------------------------------------------------------------------------
 hermescontrollerinfo::LinkStats
 HermesCoreController::read_link_stats(uint16_t link) {
   this->sel_tx_mux(link);
-
 
   hermescontrollerinfo::LinkStats ls;
 
@@ -292,7 +307,7 @@ HermesCoreController::read_link_stats(uint16_t link) {
   auto tx_arp_count = tx_stats.getNode("arp_count").read();
   auto tx_ping_count = tx_stats.getNode("ping_count").read();
   auto tx_udp_count = tx_stats.getNode("udp_count").read();
-  tx_stats  .getClient().dispatch();
+  tx_stats.getClient().dispatch();
 
 
   ls.err = err.value();

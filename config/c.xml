@@ -32,4 +32,5 @@
   <connection id="np02-wib-1103" uri="ipbusudp-2.0://np02-wib-1103:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.1/tx_mux_wib.xml" />
   <connection id="np02-wib-1104" uri="ipbusudp-2.0://np02-wib-1104:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.1/tx_mux_wib.xml" />
   <connection id="np02-wib-1105" uri="ipbusudp-2.0://np02-wib-1105:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.1/tx_mux_wib.xml" />
+  <connection id="iceberg-wib-101" uri="ipbusudp-2.0://192.168.121.20:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.1/tx_mux_wib.xml" />
 </connections>

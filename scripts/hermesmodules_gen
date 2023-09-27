@@ -75,7 +75,7 @@ def cli(
 
     console.log(f"\nIndividual configuration records before any command line overrides: ")    
 
-    # Copy-of-a-hack, see daqconf's daqconf_multiru_gen file (commit e26a21d54fc5)
+    # Copy-of-a-hack, see daqconf's fddaqconf_gen file (commit e26a21d54fc5)
     boot = bootgen.boot(**config_data.boot)
     console.log(f"boot configuration object: {boot.pod()}")
 

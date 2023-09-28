@@ -70,7 +70,7 @@ def cli(
 
     moo.otypes.load_types('hermesmodules/confgen.jsonnet')
     import dunedaq.hermesmodules.confgen as confgen
-    moo.otypes.load_types('daqconf/confgen.jsonnet')
+    moo.otypes.load_types('daqconf/bootgen.jsonnet')
     import dunedaq.daqconf.bootgen as bootgen
 
     console.log(f"\nIndividual configuration records before any command line overrides: ")    

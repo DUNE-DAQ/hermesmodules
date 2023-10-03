@@ -200,10 +200,11 @@ int main(int argc, const char* argv[]) {
         ++rpl_count;
 
         // Send reply
-        UDPSocket rplr;
-        rplr.open();
-        rplr.send(rep_msg, ipaddr);
-        rplr.close();
+        // UDPSocket rplr;
+        // rplr.open();
+        // rplr.send(rep_msg, ipaddr);
+        // rplr.close();
+        srv.send(rep_msg, ipaddr);
 
     }
 

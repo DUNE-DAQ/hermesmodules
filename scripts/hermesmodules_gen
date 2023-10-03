@@ -70,12 +70,12 @@ def cli(
 
     moo.otypes.load_types('hermesmodules/confgen.jsonnet')
     import dunedaq.hermesmodules.confgen as confgen
-    moo.otypes.load_types('daqconf/confgen.jsonnet')
+    moo.otypes.load_types('daqconf/bootgen.jsonnet')
     import dunedaq.daqconf.bootgen as bootgen
 
     console.log(f"\nIndividual configuration records before any command line overrides: ")    
 
-    # Copy-of-a-hack, see daqconf's daqconf_multiru_gen file (commit e26a21d54fc5)
+    # Copy-of-a-hack, see daqconf's fddaqconf_gen file (commit e26a21d54fc5)
     boot = bootgen.boot(**config_data.boot)
     console.log(f"boot configuration object: {boot.pod()}")
 

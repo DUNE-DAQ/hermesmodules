@@ -1,0 +1,16 @@
+<node description="tx_data_gen registers" fwinfo="endpoint;width=4">
+    <node id="csr" address="0x0" description="synchronous ctrl register" fwinfo="endpoint;width=1">
+        <node id="ctrl" address="0x0">
+            <node id="start_stop" mask="0x1"/>
+        </node>
+    </node>
+    <node id="params" address="0x8" description="parameters register" fwinfo="endpoint;width=2">
+        <node id="write" address="0x0">
+           <node id="gap" address="0x0" mask="0x3FF"/>
+           <node id="payload_size" address="0x0" mask="0xFFF000"/>
+           <node id="version_headerinfo_1" address="0x1"/>
+           <node id="headerinfo_2" address="0x2"/>
+           <node id="data_pattern" address="0x3" mask="0xF"/>
+        </node>
+    </node>
+</node>

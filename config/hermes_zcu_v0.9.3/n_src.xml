@@ -1,0 +1,11 @@
+<node description="quad_src_registers" fwinfo="endpoint">
+    <node id="csr" address="0x0" description="ctrl/stat reg" fwinfo="endpoint;width=1">
+        <node id="ctrl">
+          <node id="sel" address="0x0" mask="0xf"/>
+        </node>
+        <node id="stat" address="0x1" >
+          <node id="no_of_src_blocks" mask="0xF"/>
+        </node>
+    </node>
+    <node id="data_src" address="0x20" description="data source" module="file://data_src.xml"/>
+</node>

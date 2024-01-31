@@ -1,0 +1,15 @@
+<node id="ultrascale_pcs_pma" fwinfo="endpoint">
+    <node id="debug" address="0x0" fwinfo="endpoint">
+        <node id="csr" address="0x0" fwinfo="endpoint;width=1">
+            <node id="ctrl" address="0x0">
+                <node id="loopback" mask="0x7"/>
+                <node id="phy_reset" mask="0x10000"/>
+            </node>
+            <node id="stat" address="0x1">
+                <node id="rx_status" mask="0xf"/>
+                <node id="tx_status" mask="0xf0"/>
+            </node>
+        </node>
+    </node>
+    <node id="freq" address="0x2" module="file://ipbus_freq_ctr.xml"/>
+</node>

@@ -1,0 +1,15 @@
+<node description="data_src_registers" fwinfo="endpoint;width=5">
+    <!-- <node id="mux" address="0x0" module="file://tx_mux.xml"/> -->
+    <node id="csr" address="0x0" fwinfo="endpoint;width=2">
+      <node id="ctrl">
+          <node id="sel" address="0x0" mask="0xf"/>
+          <node id="start_stop_all_mask" address="0x1" mask="0xf"/>
+          <!-- write 1 to the corresponding bit in start/stop_all_mask to enable "start/stop all" functionality by the signal data_gen_start for a particular data source -->
+      </node>
+      <!-- stat returns the number of data sources -->
+      <node id="stat" address="0x2" >
+         <node id="no_of_srcs" mask="0xF"/>
+      </node>
+    </node>
+    <node id="src" address="0x10" module="file://data_gen.xml"/>
+</node>

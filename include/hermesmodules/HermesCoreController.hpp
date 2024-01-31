@@ -66,6 +66,8 @@ public:
 
   void sel_tx_mux_buf(uint16_t i);
 
+  void sel_udp_core(uint16_t i);
+
   void reset(bool nuke=false);
 
   bool is_link_in_error(uint16_t link, bool do_throw=false);

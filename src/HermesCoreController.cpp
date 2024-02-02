@@ -220,7 +220,7 @@ HermesCoreController::config_udp( uint16_t link, uint64_t src_mac, uint32_t src_
   this->sel_udp_core(link);
 
   // const std::string udp_ctrl_name = fmt::format("udp.udp_core_{}.udp_core_control.nz_rst_ctrl");
-  const auto& udp_src_ctrl = m_tx_mux.getNode(fmt::format("tx_path.udp_core.udp_core_control"));
+  const auto& udp_ctrl = m_tx_mux.getNode(fmt::format("tx_path.udp_core.udp_core_control"));
 
 
   // Load the source mac address

@@ -110,11 +110,11 @@ class HermesController :
     def sel_tx_mux(self, i: int):
 
         if i >= self.n_mgt:
-            raise ValueError(f"Link {i} does not exist ({self.n_mgt})")
+            raise ValueError(f"Link {i} does not exist ({self.})")
 
-        self.get_node('csr.ctrl.sel').write(i)
+        self.get_node('tx_path.csr_tx_mux.ctrl.tx_mux_sel').write(i)
         self.dispatch()
-        j = self.get_node('csr.ctrl.sel').read()
+        j = self.get_node('tx_path.csr_tx_mux.ctrl.tx_mux_sel').read()
         self.dispatch()
         print(f"Link {j} selected")
 
@@ -124,7 +124,15 @@ class HermesController :
         if i >= self.n_src:
             raise ValueError(f"Input buffer {i} does not exist ({self.n_src})")
         
-        self.node.getNode('mux.csr.ctrl.sel_buf').write(i)
+        self.node.getNode('tx_path.tx_mux.csr.ctrl.sel_buf').write(i)
+        self.node.getClient().dispatch()
+
+    def sel_udp_core(self, i: int):
+
+        if i >= self.n_mgt:
+            raise ValueError(f"Link {i} does not exist ({self.})")
+        
+        self.node.getNode('tx_path.csr_udp_core.ctrl.udp_core_sel').write(i)
         self.node.getClient().dispatch()
 
 
@@ -329,7 +337,7 @@ def mux_config(obj, detid, crate, slot, link):
 @click.option('-l', '--link', type=int, default=0)
 @click.pass_obj
 def udp_config(obj, src_id, dst_id, link):
-    """Comfigure the UDP blocks """
+    """Configure the UDP blocks """
 
     filter_control = 0x07400307
     hrms = obj.hermes

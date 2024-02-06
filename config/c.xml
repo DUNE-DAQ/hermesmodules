@@ -3,6 +3,8 @@
 <connections>
   <connection id="192.168.121.1" uri="ipbusudp-2.0://192.168.121.1:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.1/tx_mux_wib.xml" />
 
+  <connection id="ral-zcu" uri="ipbusudp-2.0://192.168.1.45:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_zcu_v0.9.3/zcu_top.xml" />
+
   <connection id="np04-zcu-001" uri="ipbusudp-2.0://np04-zcu-001:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_zcu_v0.9.2/zcu_top.xml" />
 
   <connection id="np04-wib-301" uri="ipbusudp-2.0://np04-wib-301:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.2/tx_mux_wib.xml" />

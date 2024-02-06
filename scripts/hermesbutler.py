@@ -13,6 +13,8 @@ from rich.logging import RichHandler
 from hermesmodules.tx_endpoints import tx_endpoints
 from hermesmodules.rx_endpoints import rx_endpoints
 
+from pprint import pprint
+ 
 
 # from crappyhalclient import CrappyHardwareClient
 
@@ -110,7 +112,7 @@ class HermesController :
     def sel_tx_mux(self, i: int):
 
         if i >= self.n_mgt:
-            raise ValueError(f"Link {i} does not exist ({self.})")
+            raise ValueError(f"Link {i} does not exist ({self.n_mgt})")
 
         self.get_node('tx_path.csr_tx_mux.ctrl.tx_mux_sel').write(i)
         self.dispatch()
@@ -130,7 +132,7 @@ class HermesController :
     def sel_udp_core(self, i: int):
 
         if i >= self.n_mgt:
-            raise ValueError(f"Link {i} does not exist ({self.})")
+            raise ValueError(f"Link {i} does not exist ({self.n_mgt})")
         
         self.node.getNode('tx_path.csr_udp_core.ctrl.udp_core_sel').write(i)
         self.node.getClient().dispatch()
@@ -190,6 +192,7 @@ class HermesCliObj:
                 raise ValueError(f"{ctrl_id} is neither a zcu nor a wib")
 
             self.hw = hw
+            pprint(vars(self))
             self._controller = HermesController(tx_mux)
 
         return self._controller        
@@ -282,25 +285,25 @@ def enable(obj, enable, buf_en, tx_en, link):
 
     if tx_en is not None:
         print(f"- {'Enabling' if tx_en else 'Disabling'} 'tx block'")
-        hrms.get_node('mux.csr.ctrl.tx_en').write(tx_en)
+        hrms.get_node('tx_path.tx_mux.csr.ctrl.tx_en').write(tx_en)
     print()
 
     if buf_en is not None:
         print(f"- {'Enabling' if buf_en else 'Disabling'} 'input buffers'")
-        hrms.get_node('mux.csr.ctrl.en_buf').write(buf_en)
+        hrms.get_node('tx_path.tx_mux.csr.ctrl.en_buf').write(buf_en)
 
     time.sleep(0.1)
 
     if enable is not None:
         print(f"- {'Enabling' if enable else 'Disabling'} 'mux'")
-        hrms.get_node('mux.csr.ctrl.en').write(enable)
+        hrms.get_node('tx_path.tx_mux.csr.ctrl.en').write(enable)
 
 
     
     hrms.dispatch()
 
 
-    top_ctrl = dump_sub_regs(hrms.get_node('mux.csr.ctrl'))
+    top_ctrl = dump_sub_regs(hrms.get_node('tx_path.tx_mux.csr.ctrl'))
 
     print(
         dict_to_table(top_ctrl, title=f'Link {link} ctrls', show_header=False), 
@@ -314,17 +317,17 @@ def enable(obj, enable, buf_en, tx_en, link):
 @click.option('-l', '--link', type=int, default=0)
 @click.pass_obj
 def mux_config(obj, detid, crate, slot, link):
-    """Comfigure the UDP blocks """
+    """Configure the UDP blocks """
 
     hrms = obj.hermes
 
     hrms.sel_tx_mux(link)
 
-    hrms.get_node('mux.mux.ctrl.detid').write(detid)
-    hrms.get_node('mux.mux.ctrl.crate').write(crate)
-    hrms.get_node('mux.mux.ctrl.slot').write(slot)
+    hrms.get_node('tx_path.tx_mux.mux.ctrl.detid').write(detid)
+    hrms.get_node('tx_path.tx_mux.mux.ctrl.crate').write(crate)
+    hrms.get_node('tx_path.tx_mux.mux.ctrl.slot').write(slot)
     
-    mux_ctrl = dump_sub_regs(hrms.get_node('mux.mux.ctrl'))
+    mux_ctrl = dump_sub_regs(hrms.get_node('tx_path.tx_mux.mux.ctrl'))
 
     print(
         dict_to_table(mux_ctrl, title=f'Link {link} mux cfg', show_header=False), 
@@ -349,37 +352,37 @@ def udp_config(obj, src_id, dst_id, link):
     dst = rx_endpoints[dst_id]
     src = tx_endpoints[src_id]
 
-    udp_core_ctrl = f'udp.udp_core_{link}.udp_core_control.nz_rst_ctrl'
+    udp_core_ctrl = f'tx_path.udp_core.udp_core_control'
 
-    hrms.get_node(f'{udp_core_ctrl}.filter_control').write(filter_control)
+    hrms.get_node(f'{udp_core_ctrl}.ctrl.filter_control').write(filter_control)
 
     # Our IP address = 10.73.139.23
     # print(f"Our ip address: {socket.inet_ntoa(src['ip'].to_bytes(4, 'big'))}")
     src_u32 = int.from_bytes(socket.inet_aton(src['ip']),"big")
     print(f"Our ip address: {src['ip']} (0x{src_u32:08x})")
     
-    hrms.get_node(f'{udp_core_ctrl}.src_ip_addr').write(src_u32) 
+    hrms.get_node(f'{udp_core_ctrl}.src_addr_ctrl.src_ip_addr').write(src_u32) 
 
     # Their IP address = 10.73.139.23
     # print(f"Their ip address: {socket.inet_ntoa(dst['ip'].to_bytes(4, 'big'))}")
     dst_u32 = int.from_bytes(socket.inet_aton(dst['ip']),"big")
     print(f"Their ip address: {dst['ip']} (0x{dst_u32:08x})")
-    hrms.get_node(f'{udp_core_ctrl}.dst_ip_addr').write(dst_u32) 
+    hrms.get_node(f'{udp_core_ctrl}.ctrl.dst_ip_addr').write(dst_u32) 
     
     # Our MAC address
     # Dest MAC address
     print(f"Our mac address: 0x{src['mac']:012x}")
-    hrms.get_node(f'{udp_core_ctrl}.src_mac_addr_lower').write(src['mac'] & 0xffffffff) 
-    hrms.get_node(f'{udp_core_ctrl}.src_mac_addr_upper').write((src['mac'] >> 32) & 0xffff) 
+    hrms.get_node(f'{udp_core_ctrl}.src_addr_ctrl.src_mac_addr_lower').write(src['mac'] & 0xffffffff) 
+    hrms.get_node(f'{udp_core_ctrl}.src_addr_ctrl.src_mac_addr_upper').write((src['mac'] >> 32) & 0xffff) 
 
     # Dest MAC address
     print(f"Their mac address: 0x{dst['mac']:012x}")
-    hrms.get_node(f'{udp_core_ctrl}.dst_mac_addr_lower').write(dst['mac'] & 0xffffffff) 
-    hrms.get_node(f'{udp_core_ctrl}.dst_mac_addr_upper').write((dst['mac'] >> 32) & 0xffff) 
+    hrms.get_node(f'{udp_core_ctrl}.ctrl.dst_mac_addr_lower').write(dst['mac'] & 0xffffffff) 
+    hrms.get_node(f'{udp_core_ctrl}.ctrl.dst_mac_addr_upper').write((dst['mac'] >> 32) & 0xffff) 
 
     # Ports
-    hrms.get_node(f'{udp_core_ctrl}.udp_ports.src_port').write(src['port']) 
-    hrms.get_node(f'{udp_core_ctrl}.udp_ports.dst_port').write(dst['port']) 
+    hrms.get_node(f'{udp_core_ctrl}.src_addr_ctrl.src_port').write(src['port']) 
+    hrms.get_node(f'{udp_core_ctrl}.ctrl.dst_port').write(dst['port']) 
 
     hrms.dispatch()
 
@@ -393,12 +396,18 @@ def udp_config(obj, src_id, dst_id, link):
 def zcu_src_config(obj, link, en_n_src, dlen, rate_rdx):
     """Configure trivial data sources"""
 
-    hw = obj.hw
+    hw = obj.cm.getDevice(obj.ctrl_id)
+    #hw = obj.hw
     hrms = obj.hermes
     
     # n_mgt = obj.n_mgt
     # n_src = obj.n_src
     # n_srcs_p_mgt = n_src//n_mgt
+
+    #print(hw)
+    #pprint(vars(obj))
+    #pprint(vars(hrms))
+    #print(hw)    
 
     if link >= hrms.n_mgt:
         raise ValueError(f"MGT {link} not instantiated")
@@ -408,10 +417,10 @@ def zcu_src_config(obj, link, en_n_src, dlen, rate_rdx):
 
     for i in range(hrms.n_srcs_p_mgt):
         src_id = hrms.n_srcs_p_mgt*link+i
-        hw.getNode('ctrl.sel').write(src_id)
+        hw.getNode('src.csr.ctrl.sel').write(src_id)
         src_en = (i<en_n_src)
         print(f'Configuring generator {src_id} : {src_en}')
-        hw.getNode('src.ctrl.en').write(src_en)
+        hw.getNode('src.data_src.src.csr.ctrl.start_stop').write(src_en)
         if not src_en:
             continue
         ## Number of words per block
@@ -423,7 +432,7 @@ def zcu_src_config(obj, link, en_n_src, dlen, rate_rdx):
 
     regs = {}
     for i in range(hrms.n_src):
-        hw.getNode('ctrl.sel').write(i)
+        hw.getNode('src.ctrl.sel').write(i)
 
         regs[i] =  dump_sub_regs(hw.getNode('src.ctrl'))
 
@@ -467,9 +476,9 @@ def fakesrc_config(obj, link, n_src, src, data_len, rate_rdx):
     if n_src > hrms.n_srcs_p_mgt:
         raise ValueError(f"{n_src} must be lower than the number of generators per link ({n_srcs_p_mgt})")
 
-    was_en = hrms.get_node('mux.csr.ctrl.en_buf').read()
+    was_en = hrms.get_node('tx_path.tx_mux.csr.ctrl.en_buf').read()
     # disable buffer before reconfiguring "or bad things will happen"
-    hrms.get_node('mux.csr.ctrl.en_buf').write(0x0)
+    hrms.get_node('tx_path.tx_mux.csr.ctrl.en_buf').write(0x0)
     hrms.dispatch()
     
     for src_id in range(hrms.n_srcs_p_mgt):
@@ -479,16 +488,16 @@ def fakesrc_config(obj, link, n_src, src, data_len, rate_rdx):
         src_en = (src_id in en_srcs)
         print(f'Configuring generator {src_id} : {src_en}')
         # hw.write(f'tx.buf.ctrl.fake_en', src_en)
-        hrms.get_node('mux.buf.ctrl.fake_en').write(src_en)
+        hrms.get_node('tx_path.tx_mux.buf.ctrl.fake_en').write(src_en)
         if not src_en:
             continue
         ## ????
-        hrms.get_node('mux.buf.ctrl.dlen').write(data_len)
+        hrms.get_node('tx_path.tx_mux.buf.ctrl.dlen').write(data_len)
         ## ????
-        hrms.get_node('mux.buf.ctrl.rate_rdx').write(rate_rdx) 
+        hrms.get_node('tx_path.tx_mux.buf.ctrl.rate_rdx').write(rate_rdx) 
         hrms.dispatch()
 
-    hrms.get_node('mux.csr.ctrl.en_buf').write(was_en.value())
+    hrms.get_node('tx_path.tx_mux.csr.ctrl.en_buf').write(was_en.value())
     hrms.dispatch()
 
 
@@ -535,10 +544,10 @@ def stats(obj, sel_links, seconds, show_udp, show_buf):
 
 
         # cli control registers
-        top_ctrl = dump_sub_regs(hrms.get_node('mux.csr.ctrl'))
-        top_stat = dump_sub_regs(hrms.get_node('mux.csr.stat'))
-        ctrl_mux = dump_sub_regs(hrms.get_node('mux.mux.ctrl'))
-        stat_mux = dump_sub_regs(hrms.get_node('mux.mux.stat'))
+        top_ctrl = dump_sub_regs(hrms.get_node('tx_path.tx_mux.csr.ctrl'))
+        top_stat = dump_sub_regs(hrms.get_node('tx_path.tx_mux.csr.stat'))
+        ctrl_mux = dump_sub_regs(hrms.get_node('tx_path.tx_mux.mux.ctrl'))
+        stat_mux = dump_sub_regs(hrms.get_node('tx_path.tx_mux.mux.stat'))
 
         grid = Table.grid()
         grid.add_column("ctrl")
@@ -553,25 +562,27 @@ def stats(obj, sel_links, seconds, show_udp, show_buf):
         
 
         if show_udp:
-            ctrl_udp = dump_sub_regs(hrms.get_node(f'udp.udp_core_{i}.udp_core_control.nz_rst_ctrl'))
-            ctrl_flt_udp = dump_sub_regs(hrms.get_node(f'udp.udp_core_{i}.udp_core_control.nz_rst_ctrl.filter_control'))
-            if hrms.get_nodes(f'udp.udp_core_{i}.udp_core_control.rx_packet_counters'):
+            hrms.sel_udp_core(i)
+            ctrl_udp_src = dump_sub_regs(hrms.get_node(f'tx_path.udp_core.udp_core_control.src_addr_ctrl'))
+            ctrl_udp = dump_sub_regs(hrms.get_node(f'tx_path.udp_core.udp_core_control.ctrl'))
+            ctrl_flt_udp = dump_sub_regs(hrms.get_node(f'tx_path.udp_core.udp_core_control.ctrl.filter_control'))
+            if hrms.get_nodes(f'tx_path.udp_core.udp_core_control.rx_packet_counters'):
                 print("New tx counters found")
-                stat_rx_udp = dump_sub_regs(hrms.get_node(f'udp.udp_core_{i}.udp_core_control.rx_packet_counters'))
-                stat_tx_udp = dump_sub_regs(hrms.get_node(f'udp.udp_core_{i}.udp_core_control.tx_packet_counters'))
+                stat_rx_udp = dump_sub_regs(hrms.get_node(f'tx_path.udp_core.udp_core_control.rx_packet_counters'))
+                stat_tx_udp = dump_sub_regs(hrms.get_node(f'tx_path.udp_core.udp_core_control.tx_packet_counters'))
             else:
                 print("No new tx counters found")
-                stat_rx_udp = dump_sub_regs(hrms.get_node(f'udp.udp_core_{i}.udp_core_control.packet_counters'))
+                stat_rx_udp = dump_sub_regs(hrms.get_node(f'tx_path.udp_core.udp_core_control.tx_packet_counters'))
                 stat_tx_udp = {'-':0}
 
 
             ctrl_srcdst = {}
-            ctrl_srcdst['src_ip'] = ctrl_udp['src_ip_addr']
+            ctrl_srcdst['src_ip'] = ctrl_udp_src['src_ip_addr']
             ctrl_srcdst['dst_ip'] = ctrl_udp['dst_ip_addr']
-            ctrl_srcdst['src_mac'] = (ctrl_udp['src_mac_addr_upper.upper'] << 32) + ctrl_udp['src_mac_addr_lower']
-            ctrl_srcdst['dst_mac'] = (ctrl_udp['dst_mac_addr_upper.upper'] << 32) + ctrl_udp['dst_mac_addr_lower']
-            ctrl_srcdst['src_port'] = ctrl_udp['udp_ports.src_port']
-            ctrl_srcdst['dst_port'] = ctrl_udp['udp_ports.dst_port']
+            ctrl_srcdst['src_mac'] = (ctrl_udp_src['src_mac_addr_upper'] << 32) + ctrl_udp_src['src_mac_addr_lower']
+            ctrl_srcdst['dst_mac'] = (ctrl_udp['dst_mac_addr_upper'] << 32) + ctrl_udp['dst_mac_addr_lower']
+            ctrl_srcdst['src_port'] = ctrl_udp_src['src_port']
+            ctrl_srcdst['dst_port'] = ctrl_udp['dst_port']
 
             grid = Table.grid()
             grid.add_column("ctrl")
@@ -592,7 +603,7 @@ def stats(obj, sel_links, seconds, show_udp, show_buf):
             for j in src_ids:
                 # hw.write('tx.mux.csr.ctrl.sel_buf',j)
                 hrms.sel_tx_mux_buf(j)
-                s =  dump_sub_regs(hrms.get_node('mux.buf'))
+                s =  dump_sub_regs(hrms.get_node('tx_path.tx_mux.buf'))
                 s['blk_acc'] = (s['blk_acc_h']<<32)+s['blk_acc_l']
                 s['blk_oflow'] = (s['blk_oflow_h']<<32)+s['blk_oflow_l']
                 s['blk_rej'] = (s['blk_rej_h']<<32)+s['blk_rej_l']

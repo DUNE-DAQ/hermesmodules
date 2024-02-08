@@ -88,7 +88,7 @@ HermesController::get_info(opmonlib::InfoCollector& ci, int /* level */)
       // 
       ci.add(fmt::format("hermes_det{}_crt{}_slt{}_lnk{}",geo_info.detid, geo_info.crateid, geo_info.slotid, i), link_ci);
     }
-  } catch ( const uhal::exception:exception& e ) {
+  } catch ( const uhal::exception::exception& e ) {
     ers::warning(FailedToRetrieveStats(ERS_HERE, "IPBus exception"));
   }
  }

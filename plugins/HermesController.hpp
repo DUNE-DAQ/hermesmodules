@@ -36,9 +36,9 @@ ERS_DECLARE_ISSUE(hermesmodules,
                   );
 
 ERS_DECLARE_ISSUE(hermesmodules,
-                  FailedToRetrieveStats
-                  "Failed to retrieve hermes code stats" << msg,
-                  ((std::string)msg)
+                  FailedToRetrieveStats,
+                  "Failed to retrieve hermes code stats" << what,
+                  ((std::string)what)
                   );
                   
 namespace hermesmodules {

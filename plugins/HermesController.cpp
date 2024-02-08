@@ -17,6 +17,7 @@
 #include <netinet/ether.h>
 #include <arpa/inet.h>
 #include <fmt/core.h>
+#include "logging/Logging.hpp"
 
 
 

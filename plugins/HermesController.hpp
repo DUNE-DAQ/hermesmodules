@@ -35,6 +35,12 @@ ERS_DECLARE_ISSUE(hermesmodules,
                   ((uint16_t)cfg_n_links)((uint16_t)cfg_n_links_unique)
                   );
 
+ERS_DECLARE_ISSUE(hermesmodules,
+                  FailedToRetrieveStats,
+                  "Failed to retrieve hermes code stats" << what,
+                  ((std::string)what)
+                  );
+                  
 namespace hermesmodules {
 
 class HermesController : public dunedaq::appfwk::DAQModule

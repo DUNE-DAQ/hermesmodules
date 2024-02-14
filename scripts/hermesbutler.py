@@ -420,35 +420,56 @@ def zcu_src_config(obj, link, en_n_src, dlen, rate_rdx):
         hw.getNode('src.csr.ctrl.sel').write(src_id)
         src_en = (i<en_n_src)
         print(f'Configuring generator {src_id} : {src_en}')
-        hw.getNode('src.data_src.src.csr.ctrl.start_stop').write(src_en)
-        if not src_en:
-            continue
+        #data_gen = hw.getNode("src.data_src.src.params.write")
+        #data_gen.getNode("gap").write(1)
+        #hw.getNode('src.data_src.src.csr.ctrl.start_stop').write(src_en)
+        #if not src_en:
+        #    continue
         ## Number of words per block
-        hw.getNode('src.ctrl.dlen').write(dlen)
+        #hw.getNode('src.ctrl.dlen').write(dlen)
         ## ????
-        hw.getNode('src.ctrl.rate_rdx').write(rate_rdx) 
+        #hw.getNode('src.ctrl.rate_rdx').write(rate_rdx) 
         hw.dispatch()
 
 
     regs = {}
-    for i in range(hrms.n_src):
-        hw.getNode('src.ctrl.sel').write(i)
+    for i in range(hrms.n_srcs_p_mgt):
+        hw.getNode('src.csr.ctrl.sel').write(i)
+        src_regs = dump_sub_regs(hw.getNode('src.csr'))
+        data_src_regs = dump_sub_regs(hw.getNode('src.data_src'))
 
-        regs[i] =  dump_sub_regs(hw.getNode('src.ctrl'))
+        grid = Table.grid()
+        grid.add_column("ctrl")
+        grid.add_column("stat")
+        grid.add_row(
+            dict_to_table(src_regs, title='src_ctrl', show_header=False),
+            #dict_to_table(data_src_regs, title='data_src_ctrl', show_header=False)
+        )
+        for j in range(hrms.n_srcs_p_mgt):
+            grid.add_row(
+                dict_to_table(data_src_regs, title='data_src_ctrl', show_header=False)
+
+            )
+        print(f'Link {i}')
+        print(grid)
+
+        #regs[i] =  dump_sub_regs(hw.getNode('src.csr.stat.no_of_src_blocks'))
 
     # Create the summary table
     t = Table()
 
-    # Add 1 column for the reg name, and as many as the number of sources
-    t.add_column('name')
-    for j in range(hrms.n_src):
-        t.add_column(f'Src {j}', style='green')
+    
 
-    for n in hw.getNode('src.ctrl').getNodes():
-        t.add_row(n, *[hex(regs[i][n]) for i in range(hrms.n_src)])
+    # Add 1 column for the reg name, and as many as the number of sources
+    #t.add_column('name')
+    # for j in range(hrms.n_srcs_p_mgt):
+    #     t.add_column(f'Src {j}', style='green')
+
+    # for n in hw.getNode('src').getNodes():
+    #     t.add_row(n, *[hex(regs[i][n]) for i in range(hrms.n_srcs_p_mgt)])
 
     
-    print(t)
+    #print(t)
 
 @cli.command("fakesrc-config")
 @click.option('-l', '--link', type=int, default=0)

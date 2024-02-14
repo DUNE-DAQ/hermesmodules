@@ -14,6 +14,8 @@ from hermesmodules.tx_endpoints import tx_endpoints
 from hermesmodules.rx_endpoints import rx_endpoints
 
 from pprint import pprint
+
+from hermesmodules import core
  
 
 # from crappyhalclient import CrappyHardwareClient
@@ -66,6 +68,7 @@ class HermesController :
         self.node = node
 
         self._load_info()
+        
     
 
     def _load_info(self):
@@ -168,10 +171,20 @@ class HermesCliObj:
     
     def __init__(self):
         uhal.setLogLevelTo(uhal.LogLevel.WARNING)
-        self.cm  = uhal.ConnectionManager('file://${HERMESMODULES_SHARE}/config/c.xml')
-        self.hw = None
-        self.ctrl_id = None
-        self._controller = None
+        from ctypes import cdll
+        try:
+            cdll.LoadLibrary("libuhallibs.so")
+            self.cm  = uhal.ConnectionManager('file://${HERMESMODULES_SHARE}/config/c.xml')
+            self.hw = None
+            self.ctrl_id = None
+            self._controller = None
+            test = 1
+            self.hrmctrl = core.HermesCoreController(self.cm)
+            #core.reset(reset)
+            print("success")
+        except OSError:
+            print("soz")
+            
 
     @property
     def hermes(self):
@@ -243,22 +256,24 @@ def reset(obj, nuke):
 
     hrms = obj.hermes
 
-    if nuke is not None:        
-        hrms.get_node('csr.ctrl.nuke').write(0x1)
-        hrms.dispatch()
+    # if nuke is not None:        
+    #     hrms.get_node('csr.ctrl.nuke').write(0x1)
+    #     hrms.dispatch()
 
-        time.sleep(0.1)
+    #     time.sleep(0.1)
 
-        hrms.get_node('csr.ctrl.nuke').write(0x0)
-        hrms.dispatch()
+    #     hrms.get_node('csr.ctrl.nuke').write(0x0)
+    #     hrms.dispatch()
     
-    hrms.get_node('csr.ctrl.soft_rst').write(0x1)
-    hrms.dispatch()
+    # hrms.get_node('csr.ctrl.soft_rst').write(0x1)
+    # hrms.dispatch()
 
-    time.sleep(0.1)
+    # time.sleep(0.1)
 
-    hrms.get_node('csr.ctrl.soft_rst').write(0x0)
-    hrms.dispatch()
+    # hrms.get_node('csr.ctrl.soft_rst').write(0x0)
+    # hrms.dispatch()
+    #hrms.reset(0) 
+
 
 
 @cli.command()

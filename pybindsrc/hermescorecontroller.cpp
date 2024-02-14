@@ -13,6 +13,7 @@
 #include <sstream>
 
 #include "hermesmodules/HermesCoreController.hpp"
+#include "module.hpp"
 
 namespace py = pybind11;
 using namespace pybind11::literals; 

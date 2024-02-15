@@ -179,7 +179,7 @@ class HermesCliObj:
             self.ctrl_id = None
             self._controller = None
             test = 1
-            self.hrmctrl = core.HermesCoreController(self.cm)
+            self.hrmctrl = core.HermesCoreController.reset()
             #core.reset(reset)
             print("success")
         except OSError:

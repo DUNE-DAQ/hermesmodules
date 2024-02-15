@@ -68,7 +68,7 @@ public:
 
   void sel_udp_core(uint16_t i);
 
-  void reset(bool nuke=false);
+  void reset() const;
 
   bool is_link_in_error(uint16_t link, bool do_throw=false);
 

@@ -102,18 +102,18 @@ HermesCoreController::sel_udp_core(uint16_t i) {
 
 //-----------------------------------------------------------------------------
 void
-HermesCoreController::reset(bool nuke) {
+HermesCoreController::reset() const {
 
-    if (nuke) {
-        m_tx_mux.getNode("csr.ctrl.nuke").write(0x1);
-        m_tx_mux.getClient().dispatch();
+    // if (nuke) {
+    //     m_tx_mux.getNode("csr.ctrl.nuke").write(0x1);
+    //     m_tx_mux.getClient().dispatch();
 
-        // time.sleep(0.1);
-        std::this_thread::sleep_for (std::chrono::milliseconds(1));
+    //     // time.sleep(0.1);
+    //     std::this_thread::sleep_for (std::chrono::milliseconds(1));
 
-        m_tx_mux.getNode("csr.ctrl.nuke").write(0x0);
-        m_tx_mux.getClient().dispatch();
-    }
+    //     m_tx_mux.getNode("csr.ctrl.nuke").write(0x0);
+    //     m_tx_mux.getClient().dispatch();
+    // }
     
     m_tx_mux.getNode("csr.ctrl.soft_rst").write(0x1);
     m_tx_mux.getClient().dispatch();

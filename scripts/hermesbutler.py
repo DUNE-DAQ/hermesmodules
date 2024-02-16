@@ -189,7 +189,7 @@ class HermesCliObj:
                 print("wib mode")
                 tx_mux = hw.getNode()
             else:
-                raise ValueError(f"{ctrl_id} is neither a zcu nor a wib")
+                raise ValueError(f"{self.ctrl_id} is neither a zcu nor a wib")
 
             self.hw = hw
             pprint(vars(self))

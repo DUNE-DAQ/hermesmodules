@@ -205,7 +205,7 @@ HermesCoreController::config_mux(uint16_t link, uint16_t det, uint16_t crate, ui
   this->sel_tx_mux(link);
 
 
-  auto& mux_ctrl = m_readout.getNode("tx_path.tx_mux.csr.ctrl");
+  auto& mux_ctrl = m_readout.getNode("tx_path.tx_mux.mux.ctrl");
 
   mux_ctrl.getNode("detid").write(det);
   mux_ctrl.getNode("crate").write(crate);

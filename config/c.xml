@@ -28,11 +28,13 @@
   <connection id="np02-wib-1003" uri="ipbusudp-2.0://np02-wib-1003:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.2/tx_mux_wib.xml" />
   <connection id="np02-wib-1004" uri="ipbusudp-2.0://np02-wib-1004:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.2/tx_mux_wib.xml" />
   <connection id="np02-wib-1005" uri="ipbusudp-2.0://np02-wib-1005:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.2/tx_mux_wib.xml" />
+  <connection id="np02-wib-1006" uri="ipbusudp-2.0://np02-wib-1006:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.2/tx_mux_wib.xml" />
 
- <connection id="np02-wib-1101" uri="ipbusudp-2.0://np02-wib-1101:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.2/tx_mux_wib.xml" />
+  <connection id="np02-wib-1101" uri="ipbusudp-2.0://np02-wib-1101:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.2/tx_mux_wib.xml" />
   <connection id="np02-wib-1102" uri="ipbusudp-2.0://np02-wib-1102:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.2/tx_mux_wib.xml" />
   <connection id="np02-wib-1103" uri="ipbusudp-2.0://np02-wib-1103:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.2/tx_mux_wib.xml" />
   <connection id="np02-wib-1104" uri="ipbusudp-2.0://np02-wib-1104:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.2/tx_mux_wib.xml" />
   <connection id="np02-wib-1105" uri="ipbusudp-2.0://np02-wib-1105:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.2/tx_mux_wib.xml" />
+  <connection id="np02-wib-1106" uri="ipbusudp-2.0://np02-wib-1106:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.2/tx_mux_wib.xml" />
   <connection id="iceberg-wib-101" uri="ipbusudp-2.0://192.168.121.20:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.2/tx_mux_wib.xml" />
 </connections>

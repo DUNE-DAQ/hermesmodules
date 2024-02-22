@@ -87,7 +87,7 @@ class HermesController :
         self.n_src = n_src.value()
         self.ref_freq = ref_freq.value()
         # Extra info
-        self.n_srcs_p_mgt = self.n_src//self.n_mgt
+        self.n_srcs_p_mgt = self.n_src
 
     def get_node(self, id):
         return self.node.getNode(id)

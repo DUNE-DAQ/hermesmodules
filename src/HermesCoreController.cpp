@@ -229,6 +229,8 @@ HermesCoreController::config_udp( uint16_t link, uint64_t src_mac, uint32_t src_
   const auto& udp_ctrl = m_readout.getNode("tx_path.udp_core.udp_core_control");
 
 
+  udp_ctrl.getNode("src_addr_ctrl.use_external").write(0);  
+
   // Load the source mac address
   udp_ctrl.getNode("src_addr_ctrl.src_mac_addr_lower").write(src_mac & 0xffffffff);
   udp_ctrl.getNode("src_addr_ctrl.src_mac_addr_upper").write((src_mac >> 32) & 0xffff);

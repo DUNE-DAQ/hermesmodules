@@ -9,8 +9,11 @@
  */
 
 #include "HermesController.hpp"
-
-#include "hermesmodules/hermescontroller/Nljs.hpp"
+#include "coredal/GeoId.hpp"
+#include "appdal/HermesController.hpp"
+#include "appdal/HermesLinkConf.hpp"
+#include "appdal/IpbusAddressTable.hpp"
+#include "appdal/NICInterface.hpp"
 #include "hermesmodules/hermescontrollerinfo/InfoNljs.hpp"
 
 #include <string>
@@ -55,9 +58,12 @@ HermesController::HermesController(const std::string& name)
 
 //-----------------------------------------------------------------------------
 void
-HermesController::init(const data_t& /* structured args */)
+HermesController::init(std::shared_ptr<appfwk::ModuleConfiguration> mcfg)
 {
   uhal::setLogLevelTo(uhal::Error());
+
+  // Save our DAL for later use by do_conf
+  m_dal = mcfg->module<appdal::HermesController>(get_name());
 }
 
 //-----------------------------------------------------------------------------
@@ -96,13 +102,12 @@ HermesController::get_info(opmonlib::InfoCollector& ci, int /* level */)
 
 //-----------------------------------------------------------------------------
 void
-HermesController::do_conf(const data_t& conf_as_json)
+HermesController::do_conf(const data_t& /*conf_as_json*/)
 { 
-  m_conf = conf_as_json.get<hermescontroller::Conf>();
-
-
   // Create the ipbus 
-  auto hw = uhal::ConnectionManager::getDevice(m_conf.device.name, m_conf.device.uri, m_conf.device.addrtab);
+  auto hw = uhal::ConnectionManager::getDevice(m_dal->UID(),
+                                               m_dal->get_uri(),
+                                               m_dal->get_address_table()->get_uri());
 
   m_core_controller = std::make_unique<HermesCoreController>(hw);
 
@@ -113,21 +118,21 @@ HermesController::do_conf(const data_t& conf_as_json)
   fmt::print("ref_freq {}\n", core_info.ref_freq);
   std::cout << std::flush;
 
-
+  auto links = m_dal->get_links();
   // Size check on link conf
-  if ( m_conf.links.size() != core_info.n_mgt ) {
-    throw FirmwareConfigLinkMismatch(ERS_HERE, m_conf.links.size(), core_info.n_mgt);
+  if ( links.size() != core_info.n_mgt ) {
+    throw FirmwareConfigLinkMismatch(ERS_HERE, links.size(), core_info.n_mgt);
   }
 
   // Sequence id check
   std::set<uint32_t> ids;
-  for( const auto& l : m_conf.links) {
-    ids.insert(l.id);
+  for( const auto l : links) {
+    ids.insert(l->get_id());
   }
 
   // Look duplicate link ids
-  if ( ids.size() != m_conf.links.size() ) {
-    throw DuplicatedLinkIDs(ERS_HERE, m_conf.links.size(), ids.size());
+  if ( ids.size() != links.size() ) {
+    throw DuplicatedLinkIDs(ERS_HERE, links.size(), ids.size());
   }
 
   // Make sure that the last link id is n_mgt-1
@@ -149,26 +154,27 @@ HermesController::do_conf(const data_t& conf_as_json)
 
   // FIXME: What the hell is this again?
   uint32_t filter_control = 0x07400307;
-  for( const auto& l : m_conf.links) {
+  for( const auto& l : links) {
     
-    if ( !l.enable ) continue;
+    if ( !l->get_enabled() ) continue;
 
     m_core_controller->config_udp(
-      l.id,
-      ether_atou64(l.src_mac),
-      ip_atou32(l.src_ip),
-      m_conf.port,
-      ether_atou64(l.dst_mac),
-      ip_atou32(l.dst_ip),
-      m_conf.port,
+      l->get_id(),
+      ether_atou64(l->get_source_mac()),
+      ip_atou32(l->get_source_ip()),
+      m_dal->get_port(),
+      ether_atou64(l->get_dest_nic()->get_rx_mac()),
+      ip_atou32(l->get_dest_nic()->get_rx_ip()),
+      m_dal->get_port(),
       filter_control
     );
 
+    auto geo_info = m_dal->get_geo_info();
     m_core_controller->config_mux(
-      l.id,
-      m_conf.geo_info.det_id,
-      m_conf.geo_info.crate_id,
-      m_conf.geo_info.slot_id
+      l->get_id(),
+      geo_info->get_detector_id(),
+      geo_info->get_crate_id(),
+      geo_info->get_slot_id()
     );
 
   }
@@ -178,18 +184,19 @@ void
 HermesController::do_start(const data_t& /*d*/)
 {
 
-  for( const auto& l : m_conf.links) {
+  for( const auto l : m_dal->get_links()) {
 
-    if ( !l.enable ) continue;
+    if ( !l->get_enabled() ) continue;
     // Put the endpoint in a safe state
-    m_core_controller->enable(l.id, true);
+    m_core_controller->enable(l->get_id(), true);
   }
 
-  for( const auto& l : m_conf.links) {
+
+  for( const auto l : m_dal->get_links()) {
     
-    if ( !l.enable ) continue;
+    if ( !l->get_enabled() ) continue;
     // Put the endpoint in a safe state
-    m_core_controller->is_link_in_error(l.id, true);
+    m_core_controller->is_link_in_error(l->get_id(), true);
   }
 
 
@@ -209,11 +216,11 @@ void
 HermesController::do_stop(const data_t& /*d*/)
 {
 
-  for( const auto& l : m_conf.links) {
-
-    if ( !l.enable ) continue;
+  for( const auto l : m_dal->get_links()) {
+    
+    if ( !l->get_enabled() ) continue;
     // Put the endpoint in a safe state
-    m_core_controller->enable(l.id, false);
+    m_core_controller->enable(l->get_id(), false);
   }
 }
 

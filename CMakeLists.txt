@@ -21,13 +21,13 @@ find_package(ers REQUIRED)
 find_package(appfwk REQUIRED)
 find_package(opmonlib REQUIRED)
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
+find_package(coredal REQUIRED)
+find_package(appdal REQUIRED)
 
 ##############################################################################
 
-
 # See https://dune-daq-sw.readthedocs.io/en/latest/packages/daq-cmake/#daq_codegen
 
-daq_codegen(hermescontroller.jsonnet TEMPLATES Structs.hpp.j2 Nljs.hpp.j2)
 daq_codegen(hermescontrollerinfo.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.j2 opmonlib/InfoNljs.hpp.j2)
 
 ##############################################################################
@@ -35,7 +35,7 @@ daq_codegen(hermescontrollerinfo.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/In
 
 # See https://dune-daq-sw.readthedocs.io/en/latest/packages/daq-cmake/#daq_add_library
 
-daq_add_library(*.cpp LINK_LIBRARIES fmt::fmt ers::ers uhal::uhal) # Any source files and/or dependent libraries to link in not yet determined
+daq_add_library(*.cpp LINK_LIBRARIES coredal::coredal appdal::appdal fmt::fmt ers::ers uhal::uhal)
 
 ##############################################################################
 

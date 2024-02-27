@@ -57,7 +57,7 @@ public:
     uint16_t slotid;
   };
 
-  explicit HermesCoreController(uhal::HwInterface, std::string tx_mux_id="");
+  explicit HermesCoreController(uhal::HwInterface, std::string readout_id="");
   virtual ~HermesCoreController();
 
   const CoreInfo& get_info() const { return m_core_info; }
@@ -65,6 +65,8 @@ public:
   void sel_tx_mux(uint16_t i) ;
 
   void sel_tx_mux_buf(uint16_t i);
+
+  void sel_udp_core(uint16_t i);
 
   void reset(bool nuke=false);
 
@@ -89,7 +91,7 @@ private:
 
   uhal::HwInterface m_hw;
 
-  const uhal::Node& m_tx_mux;
+  const uhal::Node& m_readout;
 
   CoreInfo m_core_info;
 

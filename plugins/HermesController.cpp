@@ -10,6 +10,7 @@
 
 #include "HermesController.hpp"
 #include "coredal/GeoId.hpp"
+#include "appdal/EthStreamParameters.hpp"
 #include "appdal/HermesController.hpp"
 #include "appdal/HermesLinkConf.hpp"
 #include "appdal/IpbusAddressTable.hpp"
@@ -160,11 +161,11 @@ HermesController::do_conf(const data_t& /*conf_as_json*/)
 
     m_core_controller->config_udp(
       l->get_id(),
-      ether_atou64(l->get_source_mac()),
-      ip_atou32(l->get_source_ip()),
+      ether_atou64(l->get_source()->get_tx_mac()),
+      ip_atou32(l->get_source()->get_tx_ip()),
       m_dal->get_port(),
-      ether_atou64(l->get_dest_nic()->get_rx_mac()),
-      ip_atou32(l->get_dest_nic()->get_rx_ip()),
+      ether_atou64(l->get_destination()->get_rx_mac()),
+      ip_atou32(l->get_destination()->get_rx_ip()),
       m_dal->get_port(),
       filter_control
     );

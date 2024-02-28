@@ -8,13 +8,17 @@
  * received with this code.
  */
 
-#include "HermesController.hpp"
-#include "coredal/GeoId.hpp"
+#include "appdal/appdalIssues.hpp"
 #include "appdal/EthStreamParameters.hpp"
 #include "appdal/HermesController.hpp"
 #include "appdal/HermesLinkConf.hpp"
 #include "appdal/IpbusAddressTable.hpp"
 #include "appdal/NICInterface.hpp"
+#include "coredal/DROStreamConf.hpp"
+#include "coredal/GeoId.hpp"
+#include "coredal/Session.hpp"
+
+#include "HermesController.hpp"
 #include "hermesmodules/hermescontrollerinfo/InfoNljs.hpp"
 
 #include <string>
@@ -65,6 +69,7 @@ HermesController::init(std::shared_ptr<appfwk::ModuleConfiguration> mcfg)
 
   // Save our DAL for later use by do_conf
   m_dal = mcfg->module<appdal::HermesController>(get_name());
+  m_session = mcfg->configuration_manager()->session();
 }
 
 //-----------------------------------------------------------------------------
@@ -153,16 +158,26 @@ HermesController::do_conf(const data_t& /*conf_as_json*/)
 
   m_core_controller->reset();
 
+  
   // FIXME: What the hell is this again?
   uint32_t filter_control = 0x07400307;
   for( const auto& l : links) {
     
-    if ( !l->get_enabled() ) continue;
+    if (l->get_source()->disabled(*m_session) ||
+        l->get_destination()->disabled(*m_session)) {
+      continue;  
+    }
 
+    m_enabled_link_ids.push_back(l->get_id());
+
+    auto source = l->get_source()->cast<appdal::EthStreamParameters>();
+    if (source == nullptr) {
+      throw InvalidSourceStream(ERS_HERE, l->get_source()->UID());
+    }
     m_core_controller->config_udp(
       l->get_id(),
-      ether_atou64(l->get_source()->get_tx_mac()),
-      ip_atou32(l->get_source()->get_tx_ip()),
+      ether_atou64(source->get_tx_mac()),
+      ip_atou32(source->get_tx_ip()),
       m_dal->get_port(),
       ether_atou64(l->get_destination()->get_rx_mac()),
       ip_atou32(l->get_destination()->get_rx_ip()),
@@ -170,12 +185,11 @@ HermesController::do_conf(const data_t& /*conf_as_json*/)
       filter_control
     );
 
-    auto geo_info = m_dal->get_geo_info();
     m_core_controller->config_mux(
       l->get_id(),
-      geo_info->get_detector_id(),
-      geo_info->get_crate_id(),
-      geo_info->get_slot_id()
+      l->get_source()->get_geo_id()->get_detector_id(),
+      l->get_source()->get_geo_id()->get_crate_id(),
+      l->get_source()->get_geo_id()->get_slot_id()
     );
 
   }
@@ -185,19 +199,15 @@ void
 HermesController::do_start(const data_t& /*d*/)
 {
 
-  for( const auto l : m_dal->get_links()) {
-
-    if ( !l->get_enabled() ) continue;
+  for( auto id : m_enabled_link_ids) {
     // Put the endpoint in a safe state
-    m_core_controller->enable(l->get_id(), true);
+    m_core_controller->enable(id, true);
   }
 
 
-  for( const auto l : m_dal->get_links()) {
-    
-    if ( !l->get_enabled() ) continue;
+  for( auto id : m_enabled_link_ids) {
     // Put the endpoint in a safe state
-    m_core_controller->is_link_in_error(l->get_id(), true);
+    m_core_controller->is_link_in_error(id, true);
   }
 
 
@@ -217,11 +227,9 @@ void
 HermesController::do_stop(const data_t& /*d*/)
 {
 
-  for( const auto l : m_dal->get_links()) {
-    
-    if ( !l->get_enabled() ) continue;
+  for( auto id : m_enabled_link_ids) {
     // Put the endpoint in a safe state
-    m_core_controller->enable(l->get_id(), false);
+    m_core_controller->enable(id, false);
   }
 }
 

@@ -11,7 +11,6 @@
 #ifndef HERMESMODULES_PLUGINS_HERMESCORECONTROLLER_HPP_
 #define HERMESMODULES_PLUGINS_HERMESCORECONTROLLER_HPP_
 
-#include "appdal/HermesController.hpp"
 #include "appfwk/DAQModule.hpp"
 
 #include "hermesmodules/HermesCoreController.hpp"
@@ -40,6 +39,19 @@ ERS_DECLARE_ISSUE(hermesmodules,
                   "Failed to retrieve hermes code stats" << what,
                   ((std::string)what)
                   );
+
+ERS_DECLARE_ISSUE(hermesmodules,
+                  InvalidSourceStream,
+                  "Stream configuration for " << what << "is not an ethernet stream",
+                  ((std::string)what)
+                  );
+
+namespace appdal {
+  class HermesCoreController;
+}
+namespace coredal {
+  class Session;
+}
                   
 namespace hermesmodules {
 
@@ -61,8 +73,6 @@ public:
 
 private:
 
-  const appdal::HermesController* m_dal;
-
   // Commands HermesController can receive
 
   void do_conf(const data_t&);
@@ -70,6 +80,9 @@ private:
   void do_stop(const data_t&);
 
   std::unique_ptr<HermesCoreController> m_core_controller;
+  const appdal::HermesController* m_dal;
+  const coredal::Session* m_session;
+  std::vector<uint32_t> m_enabled_link_ids;
 
   std::atomic<int64_t> m_total_amount {0};
   std::atomic<int>     m_amount_since_last_get_info_call {0};

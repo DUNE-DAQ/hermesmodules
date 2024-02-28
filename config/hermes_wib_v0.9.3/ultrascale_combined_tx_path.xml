@@ -1,0 +1,20 @@
+<node id="ultrascale_combined_tx_path" fwinfo="endpoint">
+    <node id="udp_core"  address="0x0"   module="file://udp_core_top_mmap_ipb.xml" fwinfo="endpoint"/>
+    <node id="tx_mux" address="0x800" module="file://tx_mux.xml" />
+    <node id="csr_tx_mux" address="0x842" description="ctrl/stat register" fwinfo="endpoint;width=1">
+        <node id="ctrl" address="0x0">
+            <node id="tx_mux_sel" mask="0xF"/>
+        </node>
+        <node id="stat" address="0x1">
+            <node id="n_mgt" mask="0xF"/>
+        </node>
+    </node>
+    <node id="csr_udp_core" address="0x844" description="ctrl/stat register" fwinfo="endpoint;width=1">
+        <node id="ctrl" address="0x0">
+            <node id="udp_core_sel" mask="0xF"/>
+        </node>
+        <node id="stat" address="0x1">
+            <node id="n_mgt" mask="0xF"/>
+        </node>
+    </node>
+</node>

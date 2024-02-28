@@ -8,8 +8,8 @@ namespace dunedaq {
 namespace hermesmodules {
 
 //-----------------------------------------------------------------------------
-HermesCoreController::HermesCoreController(uhal::HwInterface hw, std::string tx_mux_id) :
-  m_hw(hw), m_tx_mux(m_hw.getNode(tx_mux_id)) {
+HermesCoreController::HermesCoreController(uhal::HwInterface hw, std::string readout_id) :
+  m_hw(hw), m_readout(m_hw.getNode(readout_id)) {
 
     this->load_hw_info();
 
@@ -25,24 +25,24 @@ void
 HermesCoreController::load_hw_info() {
 
   // Check magic number
-  auto magic = m_tx_mux.getNode("info.magic").read();
-  m_tx_mux.getClient().dispatch();
+  auto magic = m_readout.getNode("info.magic").read();
+  m_readout.getClient().dispatch();
   if (magic.value() != 0xdeadbeef){
       // TODO: add ERS exception
       throw MagicNumberError(ERS_HERE, magic.value(),0xdeadbeef);
   }
 
 
-  auto design = m_tx_mux.getNode("info.versions.design").read();
-  auto major = m_tx_mux.getNode("info.versions.major").read();
-  auto minor = m_tx_mux.getNode("info.versions.minor").read();
-  auto patch = m_tx_mux.getNode("info.versions.patch").read();
+  auto design = m_readout.getNode("info.versions.design").read();
+  auto major = m_readout.getNode("info.versions.major").read();
+  auto minor = m_readout.getNode("info.versions.minor").read();
+  auto patch = m_readout.getNode("info.versions.patch").read();
 
 
-  auto n_mgt = m_tx_mux.getNode("info.generics.n_mgts").read();
-  auto n_src = m_tx_mux.getNode("info.generics.n_srcs").read();
-  auto ref_freq = m_tx_mux.getNode("info.generics.ref_freq").read();
-  m_tx_mux.getClient().dispatch();
+  auto n_mgt = m_readout.getNode("info.generics.n_mgts").read();
+  auto n_src = m_readout.getNode("info.generics.n_srcs").read();
+  auto ref_freq = m_readout.getNode("info.generics.ref_freq").read();
+  m_readout.getClient().dispatch();
 
   // Version
   m_core_info.design = design.value();
@@ -71,8 +71,8 @@ HermesCoreController::sel_tx_mux(uint16_t i) {
     throw LinkDoesNotExist(ERS_HERE, i);
   }
 
-  m_tx_mux.getNode("csr.ctrl.sel").write(i);
-  m_tx_mux.getClient().dispatch();
+  m_readout.getNode("tx_path.csr_tx_mux.ctrl.tx_mux_sel").write(i);
+  m_readout.getClient().dispatch();
 }
 
 
@@ -83,8 +83,20 @@ HermesCoreController::sel_tx_mux_buf(uint16_t i) {
     throw InputBufferDoesNotExist(ERS_HERE, i);
   }
 
-  m_tx_mux.getNode("mux.csr.ctrl.sel_buf").write(i);
-  m_tx_mux.getClient().dispatch();
+  m_readout.getNode("tx_path.tx_mux.csr.ctrl.sel_buf").write(i);
+  m_readout.getClient().dispatch();
+}
+
+
+//-----------------------------------------------------------------------------
+void
+HermesCoreController::sel_udp_core(uint16_t i) {
+  if ( i >= m_core_info.n_src ) {
+    throw InputBufferDoesNotExist(ERS_HERE, i);
+  }
+
+  m_readout.getNode("tx_path.csr_udp_core.ctrl.udp_core_sel").write(i);
+  m_readout.getClient().dispatch();
 }
 
 
@@ -93,25 +105,25 @@ void
 HermesCoreController::reset(bool nuke) {
 
     if (nuke) {
-        m_tx_mux.getNode("csr.ctrl.nuke").write(0x1);
-        m_tx_mux.getClient().dispatch();
+        m_readout.getNode("csr.ctrl.nuke").write(0x1);
+        m_readout.getClient().dispatch();
 
         // time.sleep(0.1);
         std::this_thread::sleep_for (std::chrono::milliseconds(1));
 
-        m_tx_mux.getNode("csr.ctrl.nuke").write(0x0);
-        m_tx_mux.getClient().dispatch();
+        m_readout.getNode("csr.ctrl.nuke").write(0x0);
+        m_readout.getClient().dispatch();
     }
     
-    m_tx_mux.getNode("csr.ctrl.soft_rst").write(0x1);
-    m_tx_mux.getClient().dispatch();
+    m_readout.getNode("csr.ctrl.soft_rst").write(0x1);
+    m_readout.getClient().dispatch();
 
     // time.sleep(0.1)
     std::this_thread::sleep_for (std::chrono::milliseconds(1));
 
 
-    m_tx_mux.getNode("csr.ctrl.soft_rst").write(0x0);
-    m_tx_mux.getClient().dispatch();
+    m_readout.getNode("csr.ctrl.soft_rst").write(0x0);
+    m_readout.getClient().dispatch();
 
 }
 
@@ -122,11 +134,12 @@ HermesCoreController::is_link_in_error(uint16_t link, bool do_throw) {
 
   this->sel_tx_mux(link);
 
-  auto err = m_tx_mux.getNode("mux.csr.stat.err").read();
-  auto eth_rdy = m_tx_mux.getNode("mux.csr.stat.eth_rdy").read();
-  auto src_rdy = m_tx_mux.getNode("mux.csr.stat.src_rdy").read();
-  auto udp_rdy = m_tx_mux.getNode("mux.csr.stat.udp_rdy").read();
-  m_tx_mux.getClient().dispatch();
+  auto& tx_mux_stat = m_readout.getNode("tx_path.tx_mux.csr.stat");
+  auto err = tx_mux_stat.getNode("err").read();
+  auto eth_rdy = tx_mux_stat.getNode("eth_rdy").read();
+  auto src_rdy = tx_mux_stat.getNode("src_rdy").read();
+  auto udp_rdy = tx_mux_stat.getNode("udp_rdy").read();
+  tx_mux_stat.getClient().dispatch();
 
   bool is_error = (err || !eth_rdy || !src_rdy || !udp_rdy);
 
@@ -143,41 +156,43 @@ HermesCoreController::enable(uint16_t link, bool enable) {
 
   this->sel_tx_mux(link);
 
+  auto& tx_mux_ctrl = m_readout.getNode("tx_path.tx_mux.csr.ctrl");
+  
   // Not sure what to do with this
-  auto tx_en = m_tx_mux.getNode("mux.csr.ctrl.tx_en").read();
-  auto buf_en = m_tx_mux.getNode("mux.csr.ctrl.en_buf").read();
-  auto ctrl_en = m_tx_mux.getNode("mux.csr.ctrl.en").read();
+  auto tx_en = tx_mux_ctrl.getNode("tx_en").read();
+  auto buf_en = tx_mux_ctrl.getNode("en_buf").read();
+  auto ctrl_en = tx_mux_ctrl.getNode("en").read();
 
   if ( enable ) {
 
     // Assume that all is off
 
     // Enable the main logic
-    m_tx_mux.getNode("mux.csr.ctrl.en").write(0x1);
-    m_tx_mux.getClient().dispatch();
+    tx_mux_ctrl.getNode("en").write(0x1);
+    tx_mux_ctrl.getClient().dispatch();
 
     // Enable transmitter first
-    m_tx_mux.getNode("mux.csr.ctrl.tx_en").write(0x1);
-    m_tx_mux.getClient().dispatch();
+    tx_mux_ctrl.getNode("tx_en").write(0x1);
+    tx_mux_ctrl.getClient().dispatch();
 
     // Enable buffers last
-    m_tx_mux.getNode("mux.csr.ctrl.en_buf").write(0x1);
-    m_tx_mux.getClient().dispatch();
+    tx_mux_ctrl.getNode("en_buf").write(0x1);
+    tx_mux_ctrl.getClient().dispatch();
 
 
   } else {
 
     // Disable buffers last
-    m_tx_mux.getNode("mux.csr.ctrl.en_buf").write(0x0);
-    m_tx_mux.getClient().dispatch();
+    tx_mux_ctrl.getNode("en_buf").write(0x0);
+    tx_mux_ctrl.getClient().dispatch();
 
     // Disable transmitter first
-    m_tx_mux.getNode("mux.csr.ctrl.tx_en").write(0x0);
-    m_tx_mux.getClient().dispatch();
+    tx_mux_ctrl.getNode("tx_en").write(0x0);
+    tx_mux_ctrl.getClient().dispatch();
 
     // Disable the main logic
-    m_tx_mux.getNode("mux.csr.ctrl.en").write(0x0);
-    m_tx_mux.getClient().dispatch();
+    tx_mux_ctrl.getNode("en").write(0x0);
+    tx_mux_ctrl.getClient().dispatch();
 
   }
 
@@ -190,9 +205,12 @@ HermesCoreController::config_mux(uint16_t link, uint16_t det, uint16_t crate, ui
   this->sel_tx_mux(link);
 
 
-  m_tx_mux.getNode("mux.mux.ctrl.detid").write(det);
-  m_tx_mux.getNode("mux.mux.ctrl.crate").write(crate);
-  m_tx_mux.getNode("mux.mux.ctrl.slot").write(slot);
+  auto& mux_ctrl = m_readout.getNode("tx_path.tx_mux.mux.ctrl");
+
+  mux_ctrl.getNode("detid").write(det);
+  mux_ctrl.getNode("crate").write(crate);
+  mux_ctrl.getNode("slot").write(slot);
+  mux_ctrl.getClient().dispatch();
     
 }
 
@@ -205,30 +223,34 @@ HermesCoreController::config_udp( uint16_t link, uint64_t src_mac, uint32_t src_
     throw LinkDoesNotExist(ERS_HERE, link);
   }
 
-  // const std::string udp_ctrl_name = fmt::format("udp.udp_core_{}.udp_core_control.nz_rst_ctrl");
-  const auto& udp_ctrl = m_tx_mux.getNode(fmt::format("udp.udp_core_{}.udp_core_control.nz_rst_ctrl", link));
+  this->sel_udp_core(link);
 
+  // const std::string udp_ctrl_name = fmt::format("udp.udp_core_{}.udp_core_control.nz_rst_ctrl");
+  const auto& udp_ctrl = m_readout.getNode("tx_path.udp_core.udp_core_control");
+
+
+  udp_ctrl.getNode("src_addr_ctrl.use_external").write(0);  
 
   // Load the source mac address
-  udp_ctrl.getNode("src_mac_addr_lower").write(src_mac & 0xffffffff);
-  udp_ctrl.getNode("src_mac_addr_upper").write((src_mac >> 32) & 0xffff);
+  udp_ctrl.getNode("src_addr_ctrl.src_mac_addr_lower").write(src_mac & 0xffffffff);
+  udp_ctrl.getNode("src_addr_ctrl.src_mac_addr_upper").write((src_mac >> 32) & 0xffff);
 
   // Load the source ip address
-  udp_ctrl.getNode("src_ip_addr").write(src_ip);
+  udp_ctrl.getNode("src_addr_ctrl.src_ip_addr").write(src_ip);
 
   // Load the dst mac address
-  udp_ctrl.getNode("dst_mac_addr_lower").write(dst_mac & 0xffffffff);
-  udp_ctrl.getNode("dst_mac_addr_upper").write((dst_mac >> 32) & 0xffff);
+  udp_ctrl.getNode("ctrl.dst_mac_addr_lower").write(dst_mac & 0xffffffff);
+  udp_ctrl.getNode("ctrl.dst_mac_addr_upper").write((dst_mac >> 32) & 0xffff);
 
   // Load the dst ip address
-  udp_ctrl.getNode("dst_ip_addr").write(dst_ip);
+  udp_ctrl.getNode("ctrl.dst_ip_addr").write(dst_ip);
 
   // Ports
-  udp_ctrl.getNode("udp_ports.src_port").write(src_port);
-  udp_ctrl.getNode("udp_ports.dst_port").write(dst_port);
+  udp_ctrl.getNode("src_addr_ctrl.src_port").write(src_port);
+  udp_ctrl.getNode("ctrl.dst_port").write(dst_port);
 
 
-  udp_ctrl.getNode("filter_control").write(filters);
+  udp_ctrl.getNode("ctrl.filter_control").write(filters);
   udp_ctrl.getClient().dispatch();
 
 }
@@ -239,9 +261,9 @@ HermesCoreController::config_fake_src(uint16_t link, uint16_t n_src, uint16_t da
 
   this->sel_tx_mux(link);
 
-  auto was_en_buf = m_tx_mux.getNode("mux.csr.ctrl.en_buf").read();
-  m_tx_mux.getNode("mux.csr.ctrl.en_buf").write(0x0);
-  m_tx_mux.getClient().dispatch();
+  auto was_en_buf = m_readout.getNode("tx_path.tx_mux.csr.ctrl.en_buf").read();
+  m_readout.getNode("tx_path.tx_mux.csr.ctrl.en_buf").write(0x0);
+  m_readout.getClient().dispatch();
 
 
   for ( size_t src_id(0); src_id<m_core_info.srcs_per_mux; ++src_id) {
@@ -249,19 +271,19 @@ HermesCoreController::config_fake_src(uint16_t link, uint16_t n_src, uint16_t da
 
 
     bool src_en = (src_id<n_src);
-    m_tx_mux.getNode("mux.buf.ctrl.fake_en").write(src_en);
-    m_tx_mux.getClient().dispatch();
+    m_readout.getNode("tx_path.tx_mux.buf.ctrl.fake_en").write(src_en);
+    m_readout.getClient().dispatch();
     if (!src_en) {
       continue;
     }
-    m_tx_mux.getNode("mux.buf.ctrl.dlen").write(data_len);
+    m_readout.getNode("tx_path.tx_mux.buf.ctrl.dlen").write(data_len);
         
-    m_tx_mux.getNode("mux.buf.ctrl.rate_rdx").write(rate);
-    m_tx_mux.getClient().dispatch();
+    m_readout.getNode("tx_path.tx_mux.buf.ctrl.rate_rdx").write(rate);
+    m_readout.getClient().dispatch();
   }
 
-  m_tx_mux.getNode("mux.csr.ctrl.en_buf").write(was_en_buf.value());
-  m_tx_mux.getClient().dispatch();
+  m_readout.getNode("tx_path.tx_mux.csr.ctrl.en_buf").write(was_en_buf.value());
+  m_readout.getClient().dispatch();
 }
 
 
@@ -271,11 +293,11 @@ HermesCoreController::read_link_geo_info(uint16_t link) {
 
   this->sel_tx_mux(link);
 
-  auto detid = m_tx_mux.getNode("mux.mux.ctrl.detid").read();
-  auto crate = m_tx_mux.getNode("mux.mux.ctrl.crate").read();
-  auto slot = m_tx_mux.getNode("mux.mux.ctrl.slot").read();
+  auto detid = m_readout.getNode("tx_path.tx_mux.mux.ctrl.detid").read();
+  auto crate = m_readout.getNode("tx_path.tx_mux.mux.ctrl.crate").read();
+  auto slot = m_readout.getNode("tx_path.tx_mux.mux.ctrl.slot").read();
 
-  m_tx_mux.getClient().dispatch();
+  m_readout.getClient().dispatch();
 
   return {detid.value(), crate.value(), slot.value()};
 }
@@ -284,17 +306,18 @@ HermesCoreController::read_link_geo_info(uint16_t link) {
 hermescontrollerinfo::LinkStats
 HermesCoreController::read_link_stats(uint16_t link) {
   this->sel_tx_mux(link);
+  this->sel_udp_core(link);
 
   hermescontrollerinfo::LinkStats ls;
 
-  const auto& mux_stats = m_tx_mux.getNode("mux.csr.stat");
+  const auto& mux_stats = m_readout.getNode("tx_path.tx_mux.csr.stat");
   auto err = mux_stats.getNode("err").read();
   auto eth_rdy = mux_stats.getNode("eth_rdy").read();
   auto src_rdy = mux_stats.getNode("src_rdy").read();
   auto udp_rdy = mux_stats.getNode("udp_rdy").read();
   mux_stats.getClient().dispatch();
 
-  const auto& udp_ctrl = m_tx_mux.getNode(fmt::format("udp.udp_core_{}.udp_core_control", link));
+  const auto& udp_ctrl = m_readout.getNode(fmt::format("tx_path.udp_core.udp_core_control"));
   const auto& rx_stats = udp_ctrl.getNode("rx_packet_counters");
 
   auto rx_arp_count = rx_stats.getNode("arp_count").read();

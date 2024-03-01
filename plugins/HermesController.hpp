@@ -13,13 +13,12 @@
 
 #include "appfwk/DAQModule.hpp"
 
+#include "hermesmodules/HermesCoreController.hpp"
+#include "hermesmodules/hermescontrollerinfo/InfoNljs.hpp"
+
 #include <atomic>
 #include <limits>
 #include <string>
-
-#include "hermesmodules/HermesCoreController.hpp"
-#include "hermesmodules/hermescontroller/Nljs.hpp"
-#include "hermesmodules/hermescontrollerinfo/InfoNljs.hpp"
 
 namespace dunedaq { 
 
@@ -40,6 +39,19 @@ ERS_DECLARE_ISSUE(hermesmodules,
                   "Failed to retrieve hermes code stats" << what,
                   ((std::string)what)
                   );
+
+ERS_DECLARE_ISSUE(hermesmodules,
+                  InvalidSourceStream,
+                  "Stream configuration for " << what << "is not an ethernet stream",
+                  ((std::string)what)
+                  );
+
+namespace appdal {
+  class HermesCoreController;
+}
+namespace coredal {
+  class Session;
+}
                   
 namespace hermesmodules {
 
@@ -48,7 +60,7 @@ class HermesController : public dunedaq::appfwk::DAQModule
 public:
   explicit HermesController(const std::string& name);
 
-  void init(const data_t&) override;
+  void init(std::shared_ptr<appfwk::ModuleConfiguration>) override;
 
   void get_info(opmonlib::InfoCollector&, int /*level*/) override;
 
@@ -61,32 +73,16 @@ public:
 
 private:
 
-  hermescontroller::Conf  m_conf;
   // Commands HermesController can receive
-
-  // TO hermesmodules DEVELOPERS: PLEASE DELETE THIS FOLLOWING COMMENT AFTER READING IT
-  // For any run control command it is possible for a DAQModule to
-  // register an action that will be executed upon reception of the
-  // command. do_conf is a very common example of this; in
-  // HermesController.cpp you would implement do_conf so that members of
-  // HermesController get assigned values from a configuration passed as 
-  // an argument and originating from the CCM system.
-  // To see an example of this value assignment, look at the implementation of 
-  // do_conf in HermesController.cpp
 
   void do_conf(const data_t&);
   void do_start(const data_t&);
   void do_stop(const data_t&);
 
   std::unique_ptr<HermesCoreController> m_core_controller;
-
-  // TO hermesmodules DEVELOPERS: PLEASE DELETE THIS FOLLOWING COMMENT AFTER READING IT 
-  // m_total_amount and m_amount_since_last_get_info_call are examples
-  // of variables whose values get reported to OpMon
-  // (https://github.com/mozilla/opmon) each time get_info() is
-  // called. "amount" represents a (discrete) value which changes as HermesController
-  // runs and whose value we'd like to keep track of during running;
-  // obviously you'd want to replace this "in real life"
+  const appdal::HermesController* m_dal;
+  const coredal::Session* m_session;
+  std::vector<uint32_t> m_enabled_link_ids;
 
   std::atomic<int64_t> m_total_amount {0};
   std::atomic<int>     m_amount_since_last_get_info_call {0};

@@ -133,7 +133,7 @@ HermesController::do_conf(const data_t& /*conf_as_json*/)
   // Sequence id check
   std::set<uint32_t> ids;
   for( const auto l : links) {
-    ids.insert(l->get_id());
+    ids.insert(l->get_link_id());
   }
 
   // Look duplicate link ids
@@ -168,14 +168,14 @@ HermesController::do_conf(const data_t& /*conf_as_json*/)
       continue;  
     }
 
-    m_enabled_link_ids.push_back(l->get_id());
+    m_enabled_link_ids.push_back(l->get_link_id());
 
-    auto source = l->get_source()->cast<appdal::EthStreamParameters>();
+    auto source = l->get_source()->get_stream_params()->cast<appdal::EthStreamParameters>();
     if (source == nullptr) {
       throw InvalidSourceStream(ERS_HERE, l->get_source()->UID());
     }
     m_core_controller->config_udp(
-      l->get_id(),
+      l->get_link_id(),
       ether_atou64(source->get_tx_mac()),
       ip_atou32(source->get_tx_ip()),
       m_dal->get_port(),
@@ -186,7 +186,7 @@ HermesController::do_conf(const data_t& /*conf_as_json*/)
     );
 
     m_core_controller->config_mux(
-      l->get_id(),
+      l->get_link_id(),
       l->get_source()->get_geo_id()->get_detector_id(),
       l->get_source()->get_geo_id()->get_crate_id(),
       l->get_source()->get_geo_id()->get_slot_id()

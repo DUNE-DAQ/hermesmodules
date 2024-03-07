@@ -42,7 +42,7 @@ ERS_DECLARE_ISSUE(hermesmodules,
 
 ERS_DECLARE_ISSUE(hermesmodules,
                   InvalidSourceStream,
-                  "Stream configuration for " << what << "is not an ethernet stream",
+                  "Stream configuration for " << what << " is not an ethernet stream",
                   ((std::string)what)
                   );
 

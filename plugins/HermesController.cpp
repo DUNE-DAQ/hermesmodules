@@ -8,15 +8,15 @@
  * received with this code.
  */
 
-#include "appdal/appdalIssues.hpp"
-#include "appdal/EthStreamParameters.hpp"
-#include "appdal/HermesController.hpp"
-#include "appdal/HermesLinkConf.hpp"
-#include "appdal/IpbusAddressTable.hpp"
-#include "appdal/NICInterface.hpp"
-#include "coredal/DROStreamConf.hpp"
-#include "coredal/GeoId.hpp"
-#include "coredal/Session.hpp"
+#include "appmodel/appmodelIssues.hpp"
+#include "appmodel/EthStreamParameters.hpp"
+#include "appmodel/HermesController.hpp"
+#include "appmodel/HermesLinkConf.hpp"
+#include "appmodel/IpbusAddressTable.hpp"
+#include "appmodel/NICInterface.hpp"
+#include "confmodel/DROStreamConf.hpp"
+#include "confmodel/GeoId.hpp"
+#include "confmodel/Session.hpp"
 
 #include "HermesController.hpp"
 #include "hermesmodules/hermescontrollerinfo/InfoNljs.hpp"
@@ -68,7 +68,7 @@ HermesController::init(std::shared_ptr<appfwk::ModuleConfiguration> mcfg)
   uhal::setLogLevelTo(uhal::Error());
 
   // Save our DAL for later use by do_conf
-  m_dal = mcfg->module<appdal::HermesController>(get_name());
+  m_dal = mcfg->module<appmodel::HermesController>(get_name());
   m_session = mcfg->configuration_manager()->session();
 }
 
@@ -170,7 +170,7 @@ HermesController::do_conf(const data_t& /*conf_as_json*/)
 
     m_enabled_link_ids.push_back(l->get_link_id());
 
-    auto source = l->get_source()->get_stream_params()->cast<appdal::EthStreamParameters>();
+    auto source = l->get_source()->get_stream_params()->cast<appmodel::EthStreamParameters>();
     if (source == nullptr) {
       throw InvalidSourceStream(ERS_HERE, l->get_source()->UID());
     }

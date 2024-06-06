@@ -46,10 +46,10 @@ ERS_DECLARE_ISSUE(hermesmodules,
                   ((std::string)what)
                   );
 
-namespace appdal {
+namespace appmodel {
   class HermesCoreController;
 }
-namespace coredal {
+namespace confmodel {
   class Session;
 }
                   
@@ -80,8 +80,8 @@ private:
   void do_stop(const data_t&);
 
   std::unique_ptr<HermesCoreController> m_core_controller;
-  const appdal::HermesController* m_dal;
-  const coredal::Session* m_session;
+  const appmodel::HermesController* m_dal;
+  const confmodel::Session* m_session;
   std::vector<uint32_t> m_enabled_link_ids;
 
   std::atomic<int64_t> m_total_amount {0};

@@ -9,12 +9,11 @@
  */
 
 #include "appmodel/appmodelIssues.hpp"
-#include "appmodel/EthStreamParameters.hpp"
 #include "appmodel/HermesController.hpp"
-#include "appmodel/HermesLinkConf.hpp"
+#include "appmodel/HermesDataSender.hpp"
 #include "appmodel/IpbusAddressTable.hpp"
 #include "appmodel/NICInterface.hpp"
-#include "confmodel/DROStreamConf.hpp"
+#include "confmodel/DetectorStream.hpp"
 #include "confmodel/GeoId.hpp"
 #include "confmodel/Session.hpp"
 
@@ -158,38 +157,57 @@ HermesController::do_conf(const data_t& /*conf_as_json*/)
 
   m_core_controller->reset();
 
-  
+
   // FIXME: What the hell is this again?
   uint32_t filter_control = 0x07400307;
   for( const auto& l : links) {
-    
-    if (l->get_source()->disabled(*m_session) ||
-        l->get_destination()->disabled(*m_session)) {
+    if (l->disabled(*m_session)) {
       continue;  
     }
 
     m_enabled_link_ids.push_back(l->get_link_id());
 
-    auto source = l->get_source()->get_stream_params()->cast<appmodel::EthStreamParameters>();
-    if (source == nullptr) {
-      throw InvalidSourceStream(ERS_HERE, l->get_source()->UID());
-    }
     m_core_controller->config_udp(
       l->get_link_id(),
-      ether_atou64(source->get_tx_mac()),
-      ip_atou32(source->get_tx_ip()),
-      m_dal->get_port(),
-      ether_atou64(l->get_destination()->get_rx_mac()),
-      ip_atou32(l->get_destination()->get_rx_ip()),
-      m_dal->get_port(),
+      ether_atou64(l->get_uses()->get_mac_address()),
+      ip_atou32(l->get_uses()->get_ip_address()),
+      l->get_port(),
+      ether_atou64(m_dal->get_destination()->get_mac_address()),
+      ip_atou32(m_dal->get_destination()->get_ip_address()),
+      l->get_port(),
       filter_control
     );
 
+    // HermesDataSender may contains DetectorStreams or a ResourceSet
+    // containing DetectorStreams. Just find the first DetectorStream
+    // and use that for the geo id information.
+    const confmodel::DetectorStream* source = nullptr;
+    for (auto res : l->get_contains()) {
+      source = res->cast<confmodel::DetectorStream>();
+      if (source == nullptr) {
+        auto streams = res->cast<confmodel::ResourceSet>();
+        if (streams != nullptr) {
+          for (auto stream : streams->get_contains()) {
+            source = stream->cast<confmodel::DetectorStream>();
+            if (source != nullptr) {
+              break;
+            }
+          }
+        }
+      }
+      if (source != nullptr) {
+        break;
+      }
+    }
+    if (source == nullptr) {
+      throw InvalidSourceStream(ERS_HERE, l->UID());
+    }
+
     m_core_controller->config_mux(
       l->get_link_id(),
-      l->get_source()->get_geo_id()->get_detector_id(),
-      l->get_source()->get_geo_id()->get_crate_id(),
-      l->get_source()->get_geo_id()->get_slot_id()
+      source->get_geo_id()->get_detector_id(),
+      source->get_geo_id()->get_crate_id(),
+      source->get_geo_id()->get_slot_id()
     );
 
   }

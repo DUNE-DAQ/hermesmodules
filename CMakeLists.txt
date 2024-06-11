@@ -58,7 +58,7 @@ daq_add_plugin(HermesController duneDAQModule LINK_LIBRARIES appfwk::appfwk ${PR
 
 # See https://dune-daq-sw.readthedocs.io/en/latest/packages/daq-cmake/#daq_add_unit_test
 
-daq_add_unit_test(Placeholder_test LINK_LIBRARIES ${PROJECT_NAME})  # Placeholder_test should be replaced with real unit tests
+#daq_add_unit_test(Placeholder_test LINK_LIBRARIES ${PROJECT_NAME})  # Placeholder_test should be replaced with real unit tests
 
 ##############################################################################
 

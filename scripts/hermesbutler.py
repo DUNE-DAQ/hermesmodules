@@ -61,7 +61,7 @@ def dump_reg(node):
     return {node.getId(): v.value()}
 
 
-class HermesController :
+class HermesModule :
     def __init__(self, node):
         self.node = node
 
@@ -193,7 +193,7 @@ class HermesCliObj:
 
             self.hw = hw
             pprint(vars(self))
-            self._controller = HermesController(tx_mux)
+            self._controller = HermesModule(tx_mux)
 
         return self._controller        
 

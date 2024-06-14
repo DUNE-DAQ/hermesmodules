@@ -1,5 +1,5 @@
 /**
- * @file HermesController.hpp
+ * @file HermesModule.hpp
  *
  * Developer(s) of this DAQModule have yet to replace this line with a brief description of the DAQModule.
  *
@@ -55,32 +55,32 @@ namespace confmodel {
                   
 namespace hermesmodules {
 
-class HermesController : public dunedaq::appfwk::DAQModule
+class HermesModule : public dunedaq::appfwk::DAQModule
 {
 public:
-  explicit HermesController(const std::string& name);
+  explicit HermesModule(const std::string& name);
 
   void init(std::shared_ptr<appfwk::ModuleConfiguration>) override;
 
   void get_info(opmonlib::InfoCollector&, int /*level*/) override;
 
-  HermesController(const HermesController&) = delete;
-  HermesController& operator=(const HermesController&) = delete;
-  HermesController(HermesController&&) = delete;
-  HermesController& operator=(HermesController&&) = delete;
+  HermesModule(const HermesModule&) = delete;
+  HermesModule& operator=(const HermesModule&) = delete;
+  HermesModule(HermesModule&&) = delete;
+  HermesModule& operator=(HermesModule&&) = delete;
 
-  ~HermesController() = default;
+  ~HermesModule() = default;
 
 private:
 
-  // Commands HermesController can receive
+  // Commands HermesModule can receive
 
   void do_conf(const data_t&);
   void do_start(const data_t&);
   void do_stop(const data_t&);
 
   std::unique_ptr<HermesCoreController> m_core_controller;
-  const appmodel::HermesController* m_dal;
+  const appmodel::HermesModule* m_dal;
   const confmodel::Session* m_session;
   std::vector<uint32_t> m_enabled_link_ids;
 

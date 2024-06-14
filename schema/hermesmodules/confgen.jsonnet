@@ -16,7 +16,7 @@ local cs = {
     hermesmodules: s.record("hermesmodules", [
         s.field( "host_hermes", types.host, default="np04-srv-016", doc="Hermes application host"),
         s.field( "addrtab", types.string, default="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.3/wib_eth_readout.xml", doc="Hermes core address table"),
-        s.field( "num_hermescontrollers", types.int4, default=1, doc="A value which configures the number of instances of HermesController"),
+        s.field( "num_hermescontrollers", types.int4, default=1, doc="A value which configures the number of instances of HermesModule"),
     ]),
 
     hermesmodules_gen: s.record("hermesmodules_gen", [

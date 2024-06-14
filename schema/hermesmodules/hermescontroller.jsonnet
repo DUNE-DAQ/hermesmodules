@@ -19,7 +19,7 @@ local types = {
     // TO hermesmodules DEVELOPERS: PLEASE DELETE THIS FOLLOWING COMMENT AFTER READING IT
     // The following code is an example of a configuration record
     // written in jsonnet. In the real world it would be written so as
-    // to allow the relevant members of HermesController to be configured by
+    // to allow the relevant members of HermesModule to be configured by
     // Run Control
     geo_info : s.record("GeoInfo", [
         s.field("det_id", self.uint4, 0, doc="Detector ID"),

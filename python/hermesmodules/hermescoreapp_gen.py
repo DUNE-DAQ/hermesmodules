@@ -78,7 +78,7 @@ def get_hermescore_app(
         )
       
       modules += [DAQModule(name = f"hermes_{det}_{crate}_{slot}", 
-                            plugin = "HermesController", 
+                            plugin = "HermesModule", 
                             conf = hermescontroller.Conf(
                               device = d,
                               geo_info = g,

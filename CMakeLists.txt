@@ -51,7 +51,7 @@ daq_add_python_bindings(*.cpp LINK_LIBRARIES ${PROJECT_NAME} ) # Any additional 
 
 # See https://dune-daq-sw.readthedocs.io/en/latest/packages/daq-cmake/#daq_add_plugin
 
-daq_add_plugin(HermesController duneDAQModule LINK_LIBRARIES appfwk::appfwk ${PROJECT_NAME}) # Replace appfwk library with a more specific library when appropriate
+daq_add_plugin(HermesModule duneDAQModule LINK_LIBRARIES appfwk::appfwk ${PROJECT_NAME}) # Replace appfwk library with a more specific library when appropriate
 
 ##############################################################################
 

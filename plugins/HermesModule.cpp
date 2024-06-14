@@ -1,7 +1,7 @@
 /**
- * @file HermesController.cpp
+ * @file HermesModule.cpp
  *
- * Implementations of HermesController's functions
+ * Implementations of HermesModule's functions
  *
  * This is part of the DUNE DAQ Software Suite, copyright 2020.
  * Licensing/copyright details are in the COPYING file that you should have
@@ -9,7 +9,7 @@
  */
 
 #include "appmodel/appmodelIssues.hpp"
-#include "appmodel/HermesController.hpp"
+#include "appmodel/HermesModule.hpp"
 #include "appmodel/HermesDataSender.hpp"
 #include "appmodel/IpbusAddressTable.hpp"
 #include "appmodel/NICInterface.hpp"
@@ -17,7 +17,7 @@
 #include "confmodel/GeoId.hpp"
 #include "confmodel/Session.hpp"
 
-#include "HermesController.hpp"
+#include "HermesModule.hpp"
 #include "hermesmodules/hermescontrollerinfo/InfoNljs.hpp"
 
 #include <string>
@@ -52,28 +52,28 @@ uint32_t ip_atou32(const std::string& addr_str) {
 }
 
 //-----------------------------------------------------------------------------
-HermesController::HermesController(const std::string& name)
+HermesModule::HermesModule(const std::string& name)
   : dunedaq::appfwk::DAQModule(name)
 {
-  register_command("conf", &HermesController::do_conf);
-  register_command("start", &HermesController::do_start);
-  register_command("stop", &HermesController::do_stop);
+  register_command("conf", &HermesModule::do_conf);
+  register_command("start", &HermesModule::do_start);
+  register_command("stop", &HermesModule::do_stop);
 }
 
 //-----------------------------------------------------------------------------
 void
-HermesController::init(std::shared_ptr<appfwk::ModuleConfiguration> mcfg)
+HermesModule::init(std::shared_ptr<appfwk::ModuleConfiguration> mcfg)
 {
   uhal::setLogLevelTo(uhal::Error());
 
   // Save our DAL for later use by do_conf
-  m_dal = mcfg->module<appmodel::HermesController>(get_name());
+  m_dal = mcfg->module<appmodel::HermesModule>(get_name());
   m_session = mcfg->configuration_manager()->session();
 }
 
 //-----------------------------------------------------------------------------
 void
-HermesController::get_info(opmonlib::InfoCollector& ci, int /* level */)
+HermesModule::get_info(opmonlib::InfoCollector& ci, int /* level */)
 {
 
   try {
@@ -107,7 +107,7 @@ HermesController::get_info(opmonlib::InfoCollector& ci, int /* level */)
 
 //-----------------------------------------------------------------------------
 void
-HermesController::do_conf(const data_t& /*conf_as_json*/)
+HermesModule::do_conf(const data_t& /*conf_as_json*/)
 { 
   // Create the ipbus 
   auto hw = uhal::ConnectionManager::getDevice(m_dal->UID(),
@@ -214,7 +214,7 @@ HermesController::do_conf(const data_t& /*conf_as_json*/)
 }
 
 void
-HermesController::do_start(const data_t& /*d*/)
+HermesModule::do_start(const data_t& /*d*/)
 {
 
   for( auto id : m_enabled_link_ids) {
@@ -242,7 +242,7 @@ HermesController::do_start(const data_t& /*d*/)
 }
 
 void
-HermesController::do_stop(const data_t& /*d*/)
+HermesModule::do_stop(const data_t& /*d*/)
 {
 
   for( auto id : m_enabled_link_ids) {
@@ -253,4 +253,4 @@ HermesController::do_stop(const data_t& /*d*/)
 
 } // namespace dunedaq::hermesmodules
 
-DEFINE_DUNE_DAQ_MODULE(dunedaq::hermesmodules::HermesController)
+DEFINE_DUNE_DAQ_MODULE(dunedaq::hermesmodules::HermesModule)

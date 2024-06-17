@@ -12,7 +12,7 @@
 #include "appmodel/HermesModule.hpp"
 #include "appmodel/HermesDataSender.hpp"
 #include "appmodel/IpbusAddressTable.hpp"
-#include "appmodel/NICInterface.hpp"
+#include "confmodel/NetworkDevice.hpp"
 #include "confmodel/DetectorStream.hpp"
 #include "confmodel/GeoId.hpp"
 #include "confmodel/Session.hpp"

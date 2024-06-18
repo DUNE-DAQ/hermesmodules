@@ -112,7 +112,8 @@ HermesModule::do_conf(const data_t& /*conf_as_json*/)
   // Create the ipbus 
   auto hw = uhal::ConnectionManager::getDevice(m_dal->UID(),
                                                m_dal->get_uri(),
-                                               m_dal->get_address_table()->get_uri());
+                                               m_dal->get_address_table()->get_uri());    
+  hw.setTimeoutPeriod(m_dal->get_timeout_ms());
 
   m_core_controller = std::make_unique<HermesCoreController>(hw);
 

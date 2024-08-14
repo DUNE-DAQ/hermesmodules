@@ -34,7 +34,8 @@ register_hermescorecontroller(py::module& m)
     .def("config_mux", &HermesCoreController::config_mux)
     .def("config_udp", &HermesCoreController::config_udp)
     .def("config_fake_src", &HermesCoreController::config_fake_src)
-    .def("read_link_stats", &HermesCoreController::read_link_stats)
+
+      //.def("read_link_stats", &HermesCoreController::read_link_stats)  //opmon
 
     // .def("get_attribute",
     //      py::overload_cast<const std::string&>

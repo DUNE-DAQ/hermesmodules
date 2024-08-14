@@ -303,52 +303,52 @@ HermesCoreController::read_link_geo_info(uint16_t link) {
 }
 
 //-----------------------------------------------------------------------------
-hermescontrollerinfo::LinkStats
-HermesCoreController::read_link_stats(uint16_t link) {
-  this->sel_tx_mux(link);
-  this->sel_udp_core(link);
+// hermescontrollerinfo::LinkStats
+// HermesCoreController::read_link_stats(uint16_t link) {
+//   this->sel_tx_mux(link);
+//   this->sel_udp_core(link);
 
-  hermescontrollerinfo::LinkStats ls;
+//   hermescontrollerinfo::LinkStats ls;
 
-  const auto& mux_stats = m_readout.getNode("tx_path.tx_mux.csr.stat");
-  auto err = mux_stats.getNode("err").read();
-  auto eth_rdy = mux_stats.getNode("eth_rdy").read();
-  auto src_rdy = mux_stats.getNode("src_rdy").read();
-  auto udp_rdy = mux_stats.getNode("udp_rdy").read();
-  mux_stats.getClient().dispatch();
+//   const auto& mux_stats = m_readout.getNode("tx_path.tx_mux.csr.stat");
+//   auto err = mux_stats.getNode("err").read();
+//   auto eth_rdy = mux_stats.getNode("eth_rdy").read();
+//   auto src_rdy = mux_stats.getNode("src_rdy").read();
+//   auto udp_rdy = mux_stats.getNode("udp_rdy").read();
+//   mux_stats.getClient().dispatch();
 
-  const auto& udp_ctrl = m_readout.getNode(fmt::format("tx_path.udp_core.udp_core_control"));
-  const auto& rx_stats = udp_ctrl.getNode("rx_packet_counters");
+//   const auto& udp_ctrl = m_readout.getNode(fmt::format("tx_path.udp_core.udp_core_control"));
+//   const auto& rx_stats = udp_ctrl.getNode("rx_packet_counters");
 
-  auto rx_arp_count = rx_stats.getNode("arp_count").read();
-  auto rx_ping_count = rx_stats.getNode("ping_count").read();
-  auto rx_udp_count = rx_stats.getNode("udp_count").read();
-  rx_stats.getClient().dispatch();
+//   auto rx_arp_count = rx_stats.getNode("arp_count").read();
+//   auto rx_ping_count = rx_stats.getNode("ping_count").read();
+//   auto rx_udp_count = rx_stats.getNode("udp_count").read();
+//   rx_stats.getClient().dispatch();
 
-  const auto& tx_stats = udp_ctrl.getNode("tx_packet_counters");
+//   const auto& tx_stats = udp_ctrl.getNode("tx_packet_counters");
 
-  auto tx_arp_count = tx_stats.getNode("arp_count").read();
-  auto tx_ping_count = tx_stats.getNode("ping_count").read();
-  auto tx_udp_count = tx_stats.getNode("udp_count").read();
-  tx_stats.getClient().dispatch();
+//   auto tx_arp_count = tx_stats.getNode("arp_count").read();
+//   auto tx_ping_count = tx_stats.getNode("ping_count").read();
+//   auto tx_udp_count = tx_stats.getNode("udp_count").read();
+//   tx_stats.getClient().dispatch();
 
 
-  ls.err = err.value();
-  ls.eth_rdy = eth_rdy.value();
-  ls.src_rdy = src_rdy.value();
-  ls.udp_rdy = udp_rdy.value();
+//   ls.err = err.value();
+//   ls.eth_rdy = eth_rdy.value();
+//   ls.src_rdy = src_rdy.value();
+//   ls.udp_rdy = udp_rdy.value();
 
-  ls.rcvd_arp_count = rx_arp_count.value();
-  ls.rcvd_ping_count = rx_ping_count.value();
-  ls.rcvd_udp_count = rx_udp_count.value();
+//   ls.rcvd_arp_count = rx_arp_count.value();
+//   ls.rcvd_ping_count = rx_ping_count.value();
+//   ls.rcvd_udp_count = rx_udp_count.value();
 
-  ls.sent_arp_count = tx_arp_count.value();
-  ls.sent_ping_count = tx_ping_count.value();
-  ls.sent_udp_count = tx_udp_count.value();
+//   ls.sent_arp_count = tx_arp_count.value();
+//   ls.sent_ping_count = tx_ping_count.value();
+//   ls.sent_udp_count = tx_udp_count.value();
 
-  return ls;
+//   return ls;
 
-}
+// }
 
 
 

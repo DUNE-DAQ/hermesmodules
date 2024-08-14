@@ -14,7 +14,6 @@
 #include "appfwk/DAQModule.hpp"
 
 #include "hermesmodules/HermesCoreController.hpp"
-#include "hermesmodules/hermescontrollerinfo/InfoNljs.hpp"
 
 #include <atomic>
 #include <limits>
@@ -61,8 +60,6 @@ public:
   explicit HermesModule(const std::string& name);
 
   void init(std::shared_ptr<appfwk::ModuleConfiguration>) override;
-
-  void get_info(opmonlib::InfoCollector&, int /*level*/) override;
 
   HermesModule(const HermesModule&) = delete;
   HermesModule& operator=(const HermesModule&) = delete;

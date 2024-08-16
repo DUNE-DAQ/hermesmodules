@@ -192,7 +192,7 @@ class HermesCliObj:
                 raise ValueError(f"{self.ctrl_id} is neither a zcu nor a wib")
 
             self.hw = hw
-            pprint(vars(self))
+            # pprint(vars(self))
             self._controller = HermesModule(tx_mux)
 
         return self._controller        
@@ -361,6 +361,8 @@ def udp_config(obj, src_id, dst_id, link):
     src_u32 = int.from_bytes(socket.inet_aton(src['ip']),"big")
     print(f"Our ip address: {src['ip']} (0x{src_u32:08x})")
     
+    hrms.get_node(f'{udp_core_ctrl}.src_addr_ctrl.use_external').write(0x0) 
+
     hrms.get_node(f'{udp_core_ctrl}.src_addr_ctrl.src_ip_addr').write(src_u32) 
 
     # Their IP address = 10.73.139.23
@@ -486,16 +488,16 @@ def fakesrc_config(obj, link, n_src, src, data_len, rate_rdx):
     all_srcs = set(range(hrms.n_srcs_p_mgt))
     en_srcs = set(src) 
 
+    print(all_srcs)
+    print(en_srcs)
+
     if en_srcs != set.intersection(all_srcs, en_srcs):
         raise ValueError("AAARGH")
 
-    # print(src)
-    # return
-
     hrms.sel_tx_mux(link)
 
-    if n_src > hrms.n_srcs_p_mgt:
-        raise ValueError(f"{n_src} must be lower than the number of generators per link ({n_srcs_p_mgt})")
+    # if n_src > hrms.n_srcs_p_mgt:
+    #     raise ValueError(f"{n_src} must be lower than the number of generators per link ({n_srcs_p_mgt})")
 
     was_en = hrms.get_node('tx_path.tx_mux.csr.ctrl.en_buf').read()
     # disable buffer before reconfiguring "or bad things will happen"

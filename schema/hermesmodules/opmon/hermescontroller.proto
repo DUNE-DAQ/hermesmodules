@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package dunedaq.hermesmodules.opmon;
+
+message LinkInfo {
+
+  bool err = 1;
+  bool eth_rdy = 2;
+  bool src_rdy = 3;
+  bool udp_rdy = 4;
+
+  uint32 sent_arp_count  = 10;
+  uint32 sent_ping_count = 11;
+  uint32 sent_udp_count  = 12;
+
+  uint32 rcvd_arp_count  = 15;
+  uint32 rcvd_ping_count = 16;
+  uint32 rcvd_udp_count  = 17;
+}
+
+
+message ControllerInfo {
+
+  uint64 total_amount = 1;
+  uint32 amount_since_last_get_info_call = 2;
+  
+}

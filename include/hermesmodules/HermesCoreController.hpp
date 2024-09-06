@@ -5,6 +5,7 @@
 #include "ers/Issue.hpp"
 #include "uhal/uhal.hpp"
 
+#include "hermesmodules/opmon/hermescontroller.pb.h"
 namespace dunedaq {
 
 ERS_DECLARE_ISSUE(hermesmodules,
@@ -80,7 +81,7 @@ public:
 
   LinkGeoInfo read_link_geo_info(uint16_t link);
 
-  //  hermescontrollerinfo::LinkStats read_link_stats(uint16_t link);
+  opmon::LinkInfo read_link_stats(uint16_t link);
 
 
 private:

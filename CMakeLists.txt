@@ -28,6 +28,7 @@ find_package(appmodel REQUIRED)
 
 # See https://dune-daq-sw.readthedocs.io/en/latest/packages/daq-cmake/#daq_codegen
 
+daq_protobuf_codegen( opmon/*.proto )
 
 
 ##############################################################################

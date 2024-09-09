@@ -35,8 +35,8 @@ ERS_DECLARE_ISSUE(hermesmodules,
 
 ERS_DECLARE_ISSUE(hermesmodules,
                   FailedToRetrieveStats,
-                  "Failed to retrieve hermes code stats" << what,
-                  ((std::string)what)
+                  "Failed to retrieve hermes code stats for link " << link,
+                  ((uint16_t)link)
                   );
 
 ERS_DECLARE_ISSUE(hermesmodules,
@@ -68,6 +68,8 @@ public:
 
   ~HermesModule() = default;
 
+protected:
+  void generate_opmon_data() override;
 private:
 
   // Commands HermesModule can receive

@@ -18,6 +18,7 @@
 #include "confmodel/Session.hpp"
 
 #include "HermesModule.hpp"
+#include "hermesmodules/opmon/hermescontroller.pb.h"
 
 #include <string>
 #include <netinet/ether.h>
@@ -71,38 +72,34 @@ HermesModule::init(std::shared_ptr<appfwk::ModuleConfiguration> mcfg)
 }
 
 //-----------------------------------------------------------------------------
-// void
-// HermesModule::get_info(opmonlib::InfoCollector& ci, int /* level */)
-// {
+void
+HermesModule::generate_opmon_data() 
+{
+  opmon::ControllerInfo ginfo;
+  ginfo.set_total_amount( m_total_amount );
+  ginfo.set_amount_since_last_get_info_call( m_amount_since_last_get_info_call.exchange(0) );
+  publish( std::move(ginfo) );
 
-//   try {
-//     hermescontrollerinfo::Info info;
-//     info.total_amount = m_total_amount;
-//     info.amount_since_last_get_info_call = m_amount_since_last_get_info_call.exchange(0);
+  if ( ! m_core_controller ) return ;
+  
+  const auto& core_info = m_core_controller->get_info();
 
-//     ci.add(info);
+  for ( uint16_t i(0); i<core_info.n_mgt; ++i){
 
-//     const auto& core_info = m_core_controller->get_info();
-
-//     for ( uint16_t i(0); i<core_info.n_mgt; ++i){
-
-//       auto geo_info = m_core_controller->read_link_geo_info(i);
-
-//       // Create a sub-collector per linkg
-//       opmonlib::InfoCollector link_ci;
+    try {
+      auto geo_info = m_core_controller->read_link_geo_info(i);
+      publish( m_core_controller->read_link_stats(i),
+	       { {"detector",std::to_string(geo_info.detid)},
+		 {"crate",   std::to_string(geo_info.crateid)},
+		 {"slot",    std::to_string(geo_info.slotid)},
+		 {"link",    std::to_string(i)} } );
+    } catch ( const uhal::exception::exception& e ) {
+      ers::warning(FailedToRetrieveStats(ERS_HERE, i, e));  
+    }
       
-//       hermescontrollerinfo::LinkStats link_stats;
-
-//       // get link statis
-//       link_ci.add(m_core_controller->read_link_stats(i));
-
-//       // 
-//       ci.add(fmt::format("hermes_det{}_crt{}_slt{}_lnk{}",geo_info.detid, geo_info.crateid, geo_info.slotid, i), link_ci);
-//     }
-//   } catch ( const uhal::exception::exception& e ) {
-//     ers::warning(FailedToRetrieveStats(ERS_HERE, "IPBus exception"));
-//   }
-//  }
+  } // loop over links
+  
+}
 
 //-----------------------------------------------------------------------------
 void

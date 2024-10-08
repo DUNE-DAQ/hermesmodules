@@ -139,13 +139,19 @@ HermesModule::do_conf(const data_t& /*conf_as_json*/)
 
   // Make sure that the last link id is n_mgt-1
   if ( *ids.rbegin() != (core_info.n_mgt-1)) {
-    fmt::print("ERROR: last link id ({}) doesn't match expected ({})",*ids.rend(), core_info.n_mgt-1);
-    std::cout << std::flush;
-
-    // FIXME : ERS exception here
-    assert(false);
+    throw LinkIDConfigurationError(ERS_HERE, *ids.rend(), core_info.n_mgt-1);
+  }
+  
+  // Check ip address consistency
+  if (m_dal->get_destination()->get_ip_address().size() != 1) {
+      throw MultipleIPAddressConfigurationError(ERS_HERE, m_dal->get_destination()->UID(), m_dal->get_destination()->get_ip_address().size());
   }
 
+  for( const auto& l : links) {
+    if (l->get_uses()->get_ip_address().size() != 1) {
+      throw MultipleIPAddressConfigurationError(ERS_HERE, l->get_uses()->UID(), l->get_uses()->get_ip_address().size());
+    }
+  }
   // All good
   for ( uint16_t i(0); i<core_info.n_mgt; ++i){
     // Put the endpoint in a safe state
@@ -167,10 +173,10 @@ HermesModule::do_conf(const data_t& /*conf_as_json*/)
     m_core_controller->config_udp(
       l->get_link_id(),
       ether_atou64(l->get_uses()->get_mac_address()),
-      ip_atou32(l->get_uses()->get_ip_address()),
+      ip_atou32(l->get_uses()->get_ip_address().at(0)),
       l->get_port(),
       ether_atou64(m_dal->get_destination()->get_mac_address()),
-      ip_atou32(m_dal->get_destination()->get_ip_address()),
+      ip_atou32(m_dal->get_destination()->get_ip_address().at(0)),
       l->get_port(),
       filter_control
     );

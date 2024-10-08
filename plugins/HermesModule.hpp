@@ -45,6 +45,19 @@ ERS_DECLARE_ISSUE(hermesmodules,
                   ((std::string)what)
                   );
 
+ERS_DECLARE_ISSUE(hermesmodules,
+                  MultipleIPAddressConfigurationError,
+                  "Found " << n_ips << " ip addresses found in devcie " << dev_id << " configuration while expecting 1" ,
+                  ((std::string)dev_id)((uint16_t)n_ips)
+                  );
+
+
+ERS_DECLARE_ISSUE(hermesmodules,
+                  LinkIDConfigurationError,
+                  "Last link id found " << last_link_id << " does not match expected " <<  last_link_exp,
+                  ((uint16_t)last_link_id)((uint16_t)last_link_exp)
+                  );
+
 namespace appmodel {
   class HermesCoreController;
 }

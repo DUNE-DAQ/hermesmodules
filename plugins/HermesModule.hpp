@@ -49,7 +49,7 @@ namespace appmodel {
   class HermesCoreController;
 }
 namespace confmodel {
-  class Session;
+  class System;
 }
                   
 namespace hermesmodules {
@@ -80,7 +80,7 @@ private:
 
   std::unique_ptr<HermesCoreController> m_core_controller;
   const appmodel::HermesModule* m_dal;
-  const confmodel::Session* m_session;
+  const confmodel::System* m_system;
   std::vector<uint32_t> m_enabled_link_ids;
 
   std::atomic<int64_t> m_total_amount {0};

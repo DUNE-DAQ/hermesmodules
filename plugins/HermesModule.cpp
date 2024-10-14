@@ -15,7 +15,7 @@
 #include "confmodel/NetworkDevice.hpp"
 #include "confmodel/DetectorStream.hpp"
 #include "confmodel/GeoId.hpp"
-#include "confmodel/Session.hpp"
+#include "confmodel/System.hpp"
 
 #include "HermesModule.hpp"
 #include "hermesmodules/opmon/hermescontroller.pb.h"
@@ -68,7 +68,7 @@ HermesModule::init(std::shared_ptr<appfwk::ModuleConfiguration> mcfg)
 
   // Save our DAL for later use by do_conf
   m_dal = mcfg->module<appmodel::HermesModule>(get_name());
-  m_session = mcfg->configuration_manager()->session();
+  m_system = mcfg->configuration_manager()->system();
 }
 
 //-----------------------------------------------------------------------------
@@ -164,7 +164,7 @@ HermesModule::do_conf(const data_t& /*conf_as_json*/)
   // FIXME: What the hell is this again?
   uint32_t filter_control = 0x07400307;
   for( const auto& l : links) {
-    if (l->disabled(*m_session)) {
+    if (l->disabled(*m_system)) {
       continue;  
     }
 

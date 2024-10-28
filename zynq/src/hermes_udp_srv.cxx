@@ -78,7 +78,7 @@ int main(int argc, const char* argv[]) {
     std::map<std::string, uint64_t> device_baseaddress_map = {
         {"zcu102", 0x80000000},
         {"wib", 0xa0020000},
-        {"daphne", 0x00009000},
+        {"daphne", 0x98000000},
     };
     
 

@@ -6,8 +6,13 @@
                 <node id="phy_reset" mask="0x10000"/>
             </node>
             <node id="stat" address="0x1">
-                <node id="rx_status" mask="0xf"/>
-                <node id="tx_status" mask="0xf0"/>
+                <node id="gt_rx_rst_done" mask="0x1"/>
+                <node id="gt_tx_rst_done" mask="0x2"/>
+                <node id="qpll_lock" mask="0x4"/>
+                <node id="rx_status" mask="0x5"/>
+                <node id="rx_stat" mask="0x1FF80"/>
+                <node id="rx_error" mask="0x20000"/>
+                <node id="magic" mask="0xc0000000"/>
             </node>
         </node>
     </node>

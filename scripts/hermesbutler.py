@@ -366,6 +366,8 @@ def udp_config(obj, src_id, dst_id, link):
 
     hrms.get_node(f'{udp_core_ctrl}.ctrl.filter_control').write(filter_control)
 
+    hrms.get_node(f'{udp_core_ctrl}.src_addr_ctrl.use_external').write(0);  
+
     # Our IP address = 10.73.139.23
     # print(f"Our ip address: {socket.inet_ntoa(src['ip'].to_bytes(4, 'big'))}")
     src_u32 = int.from_bytes(socket.inet_aton(src['ip']),"big")
@@ -692,6 +694,14 @@ def tx_path(obj, phy_reset):
         'tx_mii_clk_0',
         'rx_clk_out_0',
     ]
+
+    print(pcs_pma_node.getNode('debug.csr.stat').getNodes())
+    stats =  { n: pcs_pma_node.getNode('debug.csr.stat.'+n).read() for n in pcs_pma_node.getNode('debug.csr.stat').getNodes() }
+    pcs_pma_node.getClient().dispatch()
+
+    for n,v in stats.items():
+        print(n,hex(v))
+
 
     for idx, clk_id in enumerate(clk_ids):
 

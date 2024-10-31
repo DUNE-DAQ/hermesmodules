@@ -168,15 +168,16 @@ class HermesCliObj:
     
     def __init__(self):
         uhal.setLogLevelTo(uhal.LogLevel.WARNING)
-        self.cm  = uhal.ConnectionManager('file://${HERMESMODULES_SHARE}/config/c.xml')
+        self._cm  = None
         self.hw = None
-        self.ctrl_id = None
+        self.device_id = None
+        self.connection_file_path = 'file://${HERMESMODULES_SHARE}/config/c.xml'
         self._controller = None
 
     @property
     def hermes(self):
         if self._controller is None:
-            hw = self.cm.getDevice(self.ctrl_id)
+            hw = self.cm.getDevice(self.device_id)
 
             # Identify board
             is_zcu = hw.getNodes('tx.info')
@@ -189,22 +190,31 @@ class HermesCliObj:
                 print("wib mode")
                 tx_mux = hw.getNode()
             else:
-                raise ValueError(f"{self.ctrl_id} is neither a zcu nor a wib")
+                raise ValueError(f"{self.device_id} is neither a zcu nor a wib")
 
             self.hw = hw
-            pprint(vars(self))
+            # pprint(vars(self))
             self._controller = HermesModule(tx_mux)
 
-        return self._controller        
+        return self._controller    
+        
+    @property
+    def cm(self):
+        if self._cm is None:
+            self._cm = uhal.ConnectionManager(self.connection_file_path)
+
+        return self._cm
 
 
 @click.group(chain=True, context_settings=CONTEXT_SETTINGS)
+@click.option('-c', '--connection-file', default=None, help="IPBus connection file ")
 @click.option('-d', '--device', callback=validate_device, help="IPBus device")
 # @click.pass_context
 @click.pass_obj
-def cli(obj, device):
+def cli(obj, connection_file, device):
 
-    obj.ctrl_id = device
+    obj.connection_file_path = connection_file
+    obj.device_id = device
 
 @cli.command()
 @click.pass_obj
@@ -396,7 +406,7 @@ def udp_config(obj, src_id, dst_id, link):
 def zcu_src_config(obj, link, en_n_src, dlen, rate_rdx):
     """Configure trivial data sources"""
 
-    hw = obj.cm.getDevice(obj.ctrl_id)
+    hw = obj.cm.getDevice(obj.device_id)
     #hw = obj.hw
     hrms = obj.hermes
     
@@ -661,6 +671,51 @@ def stats(obj, sel_links, seconds, show_udp, show_buf):
                 t.add_row(n,*(hex(ibuf_stats[j][n]) for j in src_ids))
             print(t)
             
+
+@cli.command()
+@click.pass_obj
+@click.option('-r', '--phy-reset', is_flag=True, default=None, help="Reset the phy block")
+def tx_path(obj, phy_reset):
+
+    hrms = obj.hermes
+    pcs_pma_node = hrms.get_node('pcs_pma')
+
+    if phy_reset:
+        print("[cyan]Resetting pty[/cyan]")
+        pcs_pma_node.getNode('debug.csr.ctrl.phy_reset').write(0x1)
+        pcs_pma_node.getNode('debug.csr.ctrl.phy_reset').write(0x0)
+        pcs_pma_node.getClient().dispatch()
+
+
+    clk_ids = [
+        'ref_clk_out',
+        'tx_mii_clk_0',
+        'rx_clk_out_0',
+    ]
+
+    for idx, clk_id in enumerate(clk_ids):
+
+        fn = pcs_pma_node.getNode('freq')
+        fn.getNode('ctrl.chan_sel').write(idx)
+        fn.getNode('ctrl.en_crap_mode').write(0x0)
+        fn.getClient().dispatch()
+
+        time.sleep(1.1)
+        c = fn.getNode('freq.count').read()
+        v = fn.getNode('freq.valid').read()
+        fn.getClient().dispatch()
+
+        if v == 0:
+            print(f'[red]Failed to measure frequency of clock {clk_id}[/red]')
+
+        ipb_freq = 100000000
+        # ipb_freq = 125000000
+        denominator = 2**24
+        true_count = int(c)*64 
+
+        clk_freq = true_count/denominator*ipb_freq
+        print(f"Measured {clk_id} clock freq {clk_freq/1000000:04} MHz")
+
 
 if __name__ == '__main__':
     FORMAT = "%(message)s"

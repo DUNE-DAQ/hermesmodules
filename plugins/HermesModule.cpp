@@ -62,13 +62,13 @@ HermesModule::HermesModule(const std::string& name)
 
 //-----------------------------------------------------------------------------
 void
-HermesModule::init(std::shared_ptr<appfwk::ModuleConfiguration> mcfg)
+HermesModule::init(std::shared_ptr<appfwk::ConfigurationManager> mcfg)
 {
   uhal::setLogLevelTo(uhal::Error());
 
   // Save our DAL for later use by do_conf
-  m_dal = mcfg->module<appmodel::HermesModule>(get_name());
-  m_session = mcfg->configuration_manager()->session();
+  m_dal = mcfg->get_dal<appmodel::HermesModule>(get_name());
+  m_session = mcfg->session();
 }
 
 //-----------------------------------------------------------------------------

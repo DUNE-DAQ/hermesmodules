@@ -73,7 +73,7 @@ class HermesModule : public dunedaq::appfwk::DAQModule
 public:
   explicit HermesModule(const std::string& name);
 
-  void init(std::shared_ptr<appfwk::ModuleConfiguration>) override;
+  void init(std::shared_ptr<appfwk::ConfigurationManager>) override;
 
   HermesModule(const HermesModule&) = delete;
   HermesModule& operator=(const HermesModule&) = delete;

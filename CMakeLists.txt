@@ -1,12 +1,4 @@
 
-
-# This is a skeleton CMakeLists.txt file, auto-generated on
-# Fri May 5 13:59:27 CEST 2023.  The developer(s) of this package should delete
-# this comment as well as adding dependent targets, packages,
-# etc. specific to the package. For details on how to write a package,
-# please see
-# https://dune-daq-sw.readthedocs.io/en/latest/packages/daq-cmake/
-
 cmake_minimum_required(VERSION 3.12)
 project(hermesmodules VERSION 2.2.1)
 
@@ -44,7 +36,7 @@ daq_add_library(*.cpp LINK_LIBRARIES confmodel::confmodel appmodel::appmodel fmt
 # See https://dune-daq-sw.readthedocs.io/en/latest/packages/daq-cmake/#daq_add_python_bindings
 
 
-daq_add_python_bindings(*.cpp LINK_LIBRARIES ${PROJECT_NAME} ) # Any additional libraries to link in beyond the main library not yet determined
+daq_add_python_bindings(*.cpp) 
 
 
 ##############################################################################

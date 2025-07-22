@@ -143,10 +143,12 @@ HermesModule::do_conf(const data_t& /*conf_as_json*/)
   }
   
   // Check ip address consistency
+  // Redundant check, schema enforces 1:1
   if (m_dal->get_destination()->get_ip_address().size() != 1) {
       throw MultipleIPAddressConfigurationError(ERS_HERE, m_dal->get_destination()->UID(), m_dal->get_destination()->get_ip_address().size());
   }
 
+  // Redundant check, schema enforces 1:1
   for( const auto& l : links) {
     if (l->get_uses()->get_ip_address().size() != 1) {
       throw MultipleIPAddressConfigurationError(ERS_HERE, l->get_uses()->UID(), l->get_uses()->get_ip_address().size());
@@ -164,7 +166,7 @@ HermesModule::do_conf(const data_t& /*conf_as_json*/)
   // FIXME: What the hell is this again?
   uint32_t filter_control = 0x07400307;
   for( const auto& l : links) {
-    if (l->disabled(*m_session)) {
+    if (l->is_disabled(*m_session)) {
       continue;  
     }
 
@@ -181,31 +183,9 @@ HermesModule::do_conf(const data_t& /*conf_as_json*/)
       filter_control
     );
 
-    // HermesDataSender may contains DetectorStreams or a ResourceSet
-    // containing DetectorStreams. Just find the first DetectorStream
-    // and use that for the geo id information.
-    const confmodel::DetectorStream* source = nullptr;
-    for (auto res : l->get_contains()) {
-      source = res->cast<confmodel::DetectorStream>();
-      if (source == nullptr) {
-        auto streams = res->cast<confmodel::ResourceSet>();
-        if (streams != nullptr) {
-          for (auto stream : streams->get_contains()) {
-            source = stream->cast<confmodel::DetectorStream>();
-            if (source != nullptr) {
-              break;
-            }
-          }
-        }
-      }
-      if (source != nullptr) {
-        break;
-      }
-    }
-    if (source == nullptr) {
-      throw InvalidSourceStream(ERS_HERE, l->UID());
-    }
-
+    // Get the first DetectorStream
+    // and use it for the geo id information.
+    const confmodel::DetectorStream* source = l->get_streams()[0];
     m_core_controller->config_mux(
       l->get_link_id(),
       source->get_geo_id()->get_detector_id(),

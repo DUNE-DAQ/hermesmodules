@@ -181,16 +181,16 @@ class HermesCliObj:
 
             # Identify board
             is_zcu = hw.getNodes('tx.info')
-            is_wib = hw.getNodes('info')
+            is_detector = hw.getNodes('info')
 
             if is_zcu:
                 print("zcu mode")
                 tx_mux = hw.getNode('tx')
-            elif is_wib:
-                print("wib mode")
+            elif is_detector:
+                print("detector mode")
                 tx_mux = hw.getNode()
             else:
-                raise ValueError(f"{self.device_id} is neither a zcu nor a wib")
+                raise ValueError(f"{self.device_id} is neither a zcu nor a detector board")
 
             self.hw = hw
             # pprint(vars(self))
@@ -517,7 +517,6 @@ def fakesrc_config(obj, link, n_src, src, data_len, rate_rdx):
     for src_id in range(hrms.n_srcs_p_mgt):
         hrms.sel_tx_mux_buf(src_id)
 
-        # src_en = (src_id<n_src)
         src_en = (src_id in en_srcs)
         print(f'Configuring generator {src_id} : {src_en}')
         # hw.write(f'tx.buf.ctrl.fake_en', src_en)
@@ -678,22 +677,35 @@ def stats(obj, sel_links, seconds, show_udp, show_buf):
 @click.pass_obj
 @click.option('-r', '--phy-reset', is_flag=True, default=None, help="Reset the phy block")
 def tx_path(obj, phy_reset):
+    '''
+    TX path low-level controls
+    '''
 
     hrms = obj.hermes
     pcs_pma_node = hrms.get_node('pcs_pma')
 
     if phy_reset:
-        print("[cyan]Resetting pty[/cyan]")
+        print("[cyan]Resetting phy[/cyan]")
         pcs_pma_node.getNode('debug.csr.ctrl.phy_reset').write(0x1)
         pcs_pma_node.getNode('debug.csr.ctrl.phy_reset').write(0x0)
         pcs_pma_node.getClient().dispatch()
+        print("[cyan]Phy reset completed[/cyan]")
 
 
+@cli.command()
+@click.pass_obj
+def tx_clock_mon(obj):
+    '''
+    TX path clock monitoring
+    '''
     clk_ids = [
         'ref_clk_out',
         'tx_mii_clk_0',
         'rx_clk_out_0',
     ]
+
+    hrms = obj.hermes
+    pcs_pma_node = hrms.get_node('pcs_pma')
 
     print(pcs_pma_node.getNode('debug.csr.stat').getNodes())
     stats =  { n: pcs_pma_node.getNode('debug.csr.stat.'+n).read() for n in pcs_pma_node.getNode('debug.csr.stat').getNodes() }

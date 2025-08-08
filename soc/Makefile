@@ -30,18 +30,23 @@ all: $(BINS)  ## Build UDP server
 install-wib: ## Install WIB startup script
 		install -d "$(DESTDIR)/bin/"
 		install -m 0755 hermes_udp_srv "$(DESTDIR)/bin/"
-		install -m 0755 init_scripts/S99hermes_udp_srv_wib.sh "/etc/rc5.d"
+		install -m 0755 init_scripts/hermes_udp_srv_wib.sh "/etc/init.d"
+		ln -s ../init.d/hermes_udp_srv_wib.sh "/etc/rc3.d/S99hermes_udp_srv_wib.sh"
+		ln -s ../init.d/hermes_udp_srv_wib.sh "/etc/rc5.d/S99hermes_udp_srv_wib.sh"
 
 install-daphne: ## Install DAPHNE startup script
 		install -d "$(DESTDIR)/bin/"
 		install -m 0755 hermes_udp_srv "$(DESTDIR)/bin/"
-		install -m 0755 init_scripts/S99hermes_udp_srv_daphne.sh "/etc/rc5.d"
+		install -m 0755 init_scripts/hermes_udp_srv_daphne.sh "/etc/init.d"
+		ln -s ../init.d/hermes_udp_srv_daphne.sh "/etc/rc3.d/S99hermes_udp_srv_daphne.sh"
+		ln -s ../init.d/hermes_udp_srv_daphne.sh "/etc/rc5.d/S99hermes_udp_srv_daphne.sh"
 
 install-zcu102: ## Install ZCU102 startup script
 		install -d "$(DESTDIR)/bin/"
 		install -m 0755 hermes_udp_srv "$(DESTDIR)/bin/"
-		install -m 0755 init_scripts/S99hermes_udp_srv_zcu102.sh "/etc/rc5.d"
-
+		install -m 0755 init_scripts/hermes_udp_srv_zcu102.sh "/etc/init.d"
+		ln -s ../init.d/hermes_udp_srv_zcu.sh "/etc/rc3.d/S99hermes_udp_srv_zcu.sh"
+		ln -s ../init.d/hermes_udp_srv_zcu.sh "/etc/rc5.d/S99hermes_udp_srv_zcu.sh"
 
 clean: ## Clean products
 		@rm -rf build $(PBGENS)

@@ -88,9 +88,9 @@ private:
 
   // Commands HermesModule can receive
 
-  void do_conf(const data_t&);
-  void do_start(const data_t&);
-  void do_stop(const data_t&);
+  void do_conf(const CommandData_t&);
+  void do_start(const CommandData_t&);
+  void do_stop(const CommandData_t&);
 
   std::unique_ptr<HermesCoreController> m_core_controller;
   const appmodel::HermesModule* m_dal;

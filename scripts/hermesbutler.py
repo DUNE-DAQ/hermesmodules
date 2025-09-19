@@ -108,14 +108,18 @@ class HermesModule :
         self.node.getClient().dispatch()
 
     def sample_ctrs(self, seconds: int):
-        self.node.getNode('samp.ctrl.samp').write(True)
-        self.node.getNode('samp.ctrl.samp').write(False)
-        self.node.getClient().dispatch()
-        if seconds:
-            time.sleep(seconds)
-            self.node.getNode('samp.ctrl.samp').write(False)
+
+        if not seconds:
+            self.node.getNode('samp.ctrl.samp').write(True)
             self.node.getNode('samp.ctrl.samp').write(False)
             self.node.getClient().dispatch()
+        else:
+            self.node.getNode('samp.ctrl.samp').write(True)
+            self.node.getClient().dispatch()
+            time.sleep(seconds)
+            self.node.getNode('samp.ctrl.samp').write(False)
+            self.node.getClient().dispatch()
+
 
 
     def sel_tx_mux(self, i: int):
@@ -150,7 +154,7 @@ class HermesModule :
 # N_MGT=4
 # N_SRC=8
 # N_SRCS_P_MGT = N_SRC//N_MGT
-MAX_MGT=2
+MAX_MGT=4
 MAX_SRCS_P_MGT =16
 mgts_all = tuple(str(i) for i in range(MAX_MGT))
 # 
@@ -367,6 +371,7 @@ def udp_config(obj, src_id, dst_id, link):
     if link >= hrms.n_mgt:
         raise ValueError(f"Link {link} not instantiated")
 
+    hrms.sel_udp_core(link)
 
     dst = rx_endpoints[dst_id]
     src = tx_endpoints[src_id]
@@ -507,6 +512,9 @@ def fakesrc_config(obj, link, n_src, src, data_len, rate_rdx):
     all_srcs = set(range(hrms.n_srcs_p_mgt))
     en_srcs = set(src) 
 
+    # print(all_srcs)
+    # print(en_srcs)
+
     if en_srcs != set.intersection(all_srcs, en_srcs):
         raise ValueError("AAARGH")
 
@@ -573,6 +581,12 @@ def stats(obj, sel_links, seconds, show_udp, show_buf):
     print(f"Sampling hermes counters for {seconds}s")
     hrms.sample_ctrs(seconds)
 
+    ts_l = hrms.get_node('samp.samp_ts_l').read()
+    ts_h = hrms.get_node('samp.samp_ts_h').read()
+    hrms.dispatch()
+
+    print(f"Current timestamp : {(ts_h.value() << 32) + ts_l.value()}")
+    
     info_data = dump_sub_regs(hrms.get_node('info'))
     print(dict_to_hextable(info_data, title='hermes info', show_header=False))
 
@@ -644,7 +658,7 @@ def stats(obj, sel_links, seconds, show_udp, show_buf):
             for j in src_ids:
                 # hw.write('tx.mux.csr.ctrl.sel_buf',j)
                 hrms.sel_tx_mux_buf(j)
-                s =  dump_sub_regs(hrms.get_node('tx_path.tx_mux.buf'))
+                s = dump_sub_regs(hrms.get_node('tx_path.tx_mux.buf'))
                 s['blk_acc'] = (s['blk_acc_h']<<32)+s['blk_acc_l']
                 s['blk_oflow'] = (s['blk_oflow_h']<<32)+s['blk_oflow_l']
                 s['blk_rej'] = (s['blk_rej_h']<<32)+s['blk_rej_l']

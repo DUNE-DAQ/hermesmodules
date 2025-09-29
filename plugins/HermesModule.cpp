@@ -68,7 +68,7 @@ HermesModule::init(std::shared_ptr<appfwk::ConfigurationManager> mcfg)
 
   // Save our DAL for later use by do_conf
   m_dal = mcfg->get_dal<appmodel::HermesModule>(get_name());
-  m_session = mcfg->session();
+  m_session = mcfg->get_session();
 }
 
 //-----------------------------------------------------------------------------
@@ -103,7 +103,7 @@ HermesModule::generate_opmon_data()
 
 //-----------------------------------------------------------------------------
 void
-HermesModule::do_conf(const data_t& /*conf_as_json*/)
+HermesModule::do_conf(const CommandData_t& /*conf_as_json*/)
 { 
   // Create the ipbus 
   auto hw = uhal::ConnectionManager::getDevice(m_dal->UID(),
@@ -197,7 +197,7 @@ HermesModule::do_conf(const data_t& /*conf_as_json*/)
 }
 
 void
-HermesModule::do_start(const data_t& /*d*/)
+HermesModule::do_start(const CommandData_t& /*d*/)
 {
 
   for( auto id : m_enabled_link_ids) {
@@ -225,7 +225,7 @@ HermesModule::do_start(const data_t& /*d*/)
 }
 
 void
-HermesModule::do_stop(const data_t& /*d*/)
+HermesModule::do_stop(const CommandData_t& /*d*/)
 {
 
   for( auto id : m_enabled_link_ids) {

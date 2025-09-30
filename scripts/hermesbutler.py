@@ -20,13 +20,22 @@ from pprint import pprint
 
 # -----------------------------------------------------------------------------
 # Utilities
-def dict_to_table( vals: dict, **kwargs):
+def dict_to_hextable( vals: dict, **kwargs):
 
     t = Table(**kwargs)
     t.add_column('name')
     t.add_column('value', style='green')
     for k,v in vals.items():
         t.add_row(k,hex(v))
+    return t
+
+def dict_to_table( vals: dict, **kwargs):
+
+    t = Table(**kwargs)
+    t.add_column('name')
+    t.add_column('value', style='green')
+    for k,v in vals.items():
+        t.add_row(k,str(v))
     return t
 
 def read_regs(hw, reg_list):
@@ -41,7 +50,7 @@ def read_and_print(hw, reg_list):
     for r in reg_list:
         v = hw.read(r)
         d[r] = v
-    print(dict_to_table(d))
+    print(dict_to_hextable(d))
 
 
 # -----------------------------------------------------------------------------
@@ -99,14 +108,18 @@ class HermesModule :
         self.node.getClient().dispatch()
 
     def sample_ctrs(self, seconds: int):
-        self.node.getNode('samp.ctrl.samp').write(True)
-        self.node.getNode('samp.ctrl.samp').write(False)
-        self.node.getClient().dispatch()
-        if seconds:
-            time.sleep(seconds)
-            self.node.getNode('samp.ctrl.samp').write(False)
+
+        if not seconds:
+            self.node.getNode('samp.ctrl.samp').write(True)
             self.node.getNode('samp.ctrl.samp').write(False)
             self.node.getClient().dispatch()
+        else:
+            self.node.getNode('samp.ctrl.samp').write(True)
+            self.node.getClient().dispatch()
+            time.sleep(seconds)
+            self.node.getNode('samp.ctrl.samp').write(False)
+            self.node.getClient().dispatch()
+
 
 
     def sel_tx_mux(self, i: int):
@@ -141,7 +154,7 @@ class HermesModule :
 # N_MGT=4
 # N_SRC=8
 # N_SRCS_P_MGT = N_SRC//N_MGT
-MAX_MGT=2
+MAX_MGT=4
 MAX_SRCS_P_MGT =16
 mgts_all = tuple(str(i) for i in range(MAX_MGT))
 # 
@@ -181,16 +194,16 @@ class HermesCliObj:
 
             # Identify board
             is_zcu = hw.getNodes('tx.info')
-            is_wib = hw.getNodes('info')
+            is_detector = hw.getNodes('info')
 
             if is_zcu:
                 print("zcu mode")
                 tx_mux = hw.getNode('tx')
-            elif is_wib:
-                print("wib mode")
+            elif is_detector:
+                print("detector mode")
                 tx_mux = hw.getNode()
             else:
-                raise ValueError(f"{self.device_id} is neither a zcu nor a wib")
+                raise ValueError(f"{self.device_id} is neither a zcu nor a detector board")
 
             self.hw = hw
             # pprint(vars(self))
@@ -316,7 +329,7 @@ def enable(obj, enable, buf_en, tx_en, link):
     top_ctrl = dump_sub_regs(hrms.get_node('tx_path.tx_mux.csr.ctrl'))
 
     print(
-        dict_to_table(top_ctrl, title=f'Link {link} ctrls', show_header=False), 
+        dict_to_hextable(top_ctrl, title=f'Link {link} ctrls', show_header=False), 
     )
 
 
@@ -340,7 +353,7 @@ def mux_config(obj, detid, crate, slot, link):
     mux_ctrl = dump_sub_regs(hrms.get_node('tx_path.tx_mux.mux.ctrl'))
 
     print(
-        dict_to_table(mux_ctrl, title=f'Link {link} mux cfg', show_header=False), 
+        dict_to_hextable(mux_ctrl, title=f'Link {link} mux cfg', show_header=False), 
     )
 
 
@@ -358,6 +371,7 @@ def udp_config(obj, src_id, dst_id, link):
     if link >= hrms.n_mgt:
         raise ValueError(f"Link {link} not instantiated")
 
+    hrms.sel_udp_core(link)
 
     dst = rx_endpoints[dst_id]
     src = tx_endpoints[src_id]
@@ -454,12 +468,12 @@ def zcu_src_config(obj, link, en_n_src, dlen, rate_rdx):
         grid.add_column("ctrl")
         grid.add_column("stat")
         grid.add_row(
-            dict_to_table(src_regs, title='src_ctrl', show_header=False),
-            #dict_to_table(data_src_regs, title='data_src_ctrl', show_header=False)
+            dict_to_hextable(src_regs, title='src_ctrl', show_header=False),
+            #dict_to_hextable(data_src_regs, title='data_src_ctrl', show_header=False)
         )
         for j in range(hrms.n_srcs_p_mgt):
             grid.add_row(
-                dict_to_table(data_src_regs, title='data_src_ctrl', show_header=False)
+                dict_to_hextable(data_src_regs, title='data_src_ctrl', show_header=False)
 
             )
         print(f'Link {i}')
@@ -498,6 +512,9 @@ def fakesrc_config(obj, link, n_src, src, data_len, rate_rdx):
     all_srcs = set(range(hrms.n_srcs_p_mgt))
     en_srcs = set(src) 
 
+    # print(all_srcs)
+    # print(en_srcs)
+
     if en_srcs != set.intersection(all_srcs, en_srcs):
         raise ValueError("AAARGH")
 
@@ -517,7 +534,6 @@ def fakesrc_config(obj, link, n_src, src, data_len, rate_rdx):
     for src_id in range(hrms.n_srcs_p_mgt):
         hrms.sel_tx_mux_buf(src_id)
 
-        # src_en = (src_id<n_src)
         src_en = (src_id in en_srcs)
         print(f'Configuring generator {src_id} : {src_en}')
         # hw.write(f'tx.buf.ctrl.fake_en', src_en)
@@ -565,8 +581,14 @@ def stats(obj, sel_links, seconds, show_udp, show_buf):
     print(f"Sampling hermes counters for {seconds}s")
     hrms.sample_ctrs(seconds)
 
+    ts_l = hrms.get_node('samp.samp_ts_l').read()
+    ts_h = hrms.get_node('samp.samp_ts_h').read()
+    hrms.dispatch()
+
+    print(f"Current timestamp : {(ts_h.value() << 32) + ts_l.value()}")
+    
     info_data = dump_sub_regs(hrms.get_node('info'))
-    print(dict_to_table(info_data, title='hermes info', show_header=False))
+    print(dict_to_hextable(info_data, title='hermes info', show_header=False))
 
     # n_srcs_p_mgt = n_src//n_mgt
 
@@ -586,10 +608,10 @@ def stats(obj, sel_links, seconds, show_udp, show_buf):
         grid.add_column("ctrl")
         grid.add_column("stat")
         grid.add_row(
-            dict_to_table(top_ctrl, title='tx_mux ctrl', show_header=False), 
-            dict_to_table(top_stat, title='tx mux stat', show_header=False),
-            dict_to_table(ctrl_mux, title="mux ctrl", show_header=False),
-            dict_to_table(stat_mux, title="mux stat", show_header=False),
+            dict_to_hextable(top_ctrl, title='tx_mux ctrl', show_header=False), 
+            dict_to_hextable(top_stat, title='tx mux stat', show_header=False),
+            dict_to_hextable(ctrl_mux, title="mux ctrl", show_header=False),
+            dict_to_hextable(stat_mux, title="mux stat", show_header=False),
         )
         print(grid)
         
@@ -621,11 +643,11 @@ def stats(obj, sel_links, seconds, show_udp, show_buf):
             grid.add_column("ctrl")
             grid.add_column("stat")
             grid.add_row(
-                # dict_to_table(ctrl_udp, title="udp ctrl", show_header=False),
-                dict_to_table(ctrl_srcdst, title="udp src/dst", show_header=False),
-                dict_to_table(ctrl_flt_udp, title="udp filter", show_header=False),
-                dict_to_table(stat_rx_udp, title="udp rx stat", show_header=False),
-                dict_to_table(stat_tx_udp, title="udp tx stat", show_header=False),
+                # dict_to_hextable(ctrl_udp, title="udp ctrl", show_header=False),
+                dict_to_hextable(ctrl_srcdst, title="udp src/dst", show_header=False),
+                dict_to_hextable(ctrl_flt_udp, title="udp filter", show_header=False),
+                dict_to_hextable(stat_rx_udp, title="udp rx stat", show_header=False),
+                dict_to_hextable(stat_tx_udp, title="udp tx stat", show_header=False),
             )
             print(grid)
 
@@ -636,7 +658,7 @@ def stats(obj, sel_links, seconds, show_udp, show_buf):
             for j in src_ids:
                 # hw.write('tx.mux.csr.ctrl.sel_buf',j)
                 hrms.sel_tx_mux_buf(j)
-                s =  dump_sub_regs(hrms.get_node('tx_path.tx_mux.buf'))
+                s = dump_sub_regs(hrms.get_node('tx_path.tx_mux.buf'))
                 s['blk_acc'] = (s['blk_acc_h']<<32)+s['blk_acc_l']
                 s['blk_oflow'] = (s['blk_oflow_h']<<32)+s['blk_oflow_l']
                 s['blk_rej'] = (s['blk_rej_h']<<32)+s['blk_rej_l']
@@ -678,31 +700,44 @@ def stats(obj, sel_links, seconds, show_udp, show_buf):
 @click.pass_obj
 @click.option('-r', '--phy-reset', is_flag=True, default=None, help="Reset the phy block")
 def tx_path(obj, phy_reset):
+    '''
+    TX path low-level controls
+    '''
 
     hrms = obj.hermes
     pcs_pma_node = hrms.get_node('pcs_pma')
 
     if phy_reset:
-        print("[cyan]Resetting pty[/cyan]")
+        print("[cyan]Resetting phy[/cyan]")
         pcs_pma_node.getNode('debug.csr.ctrl.phy_reset').write(0x1)
         pcs_pma_node.getNode('debug.csr.ctrl.phy_reset').write(0x0)
         pcs_pma_node.getClient().dispatch()
+        print("[cyan]Phy reset completed[/cyan]")
 
 
+@cli.command()
+@click.pass_obj
+def tx_clock_mon(obj):
+    '''
+    TX path clock monitoring
+    '''
     clk_ids = [
         'ref_clk_out',
         'tx_mii_clk_0',
         'rx_clk_out_0',
     ]
 
-    print(pcs_pma_node.getNode('debug.csr.stat').getNodes())
+    hrms = obj.hermes
+    pcs_pma_node = hrms.get_node('pcs_pma')
+
+    # print(pcs_pma_node.getNode('debug.csr.stat').getNodes())
     stats =  { n: pcs_pma_node.getNode('debug.csr.stat.'+n).read() for n in pcs_pma_node.getNode('debug.csr.stat').getNodes() }
     pcs_pma_node.getClient().dispatch()
 
-    for n,v in stats.items():
-        print(n,hex(v))
+    print(dict_to_hextable(stats, title='TX clock registers', show_header=False))
 
 
+    clk_freqs = {}
     for idx, clk_id in enumerate(clk_ids):
 
         fn = pcs_pma_node.getNode('freq')
@@ -724,8 +759,16 @@ def tx_path(obj, phy_reset):
         true_count = int(c)*64 
 
         clk_freq = true_count/denominator*ipb_freq
-        print(f"Measured {clk_id} clock freq {clk_freq/1000000:04} MHz")
+        # print(f"Measured {clk_id} clock freq {clk_freq/1000000:04} MHz")
+        print(f"Measured clock '{clk_id}'")
+        clk_freqs[clk_id] = clk_freq
 
+
+    print(dict_to_table({k:f"{v/1000000:7.3f} MHz" for k,v in clk_freqs.items()}, title='TX clocks', show_header=False))
+
+
+
+ 
 
 if __name__ == '__main__':
     FORMAT = "%(message)s"

@@ -57,4 +57,5 @@
   <connection id="iceberg-wib-103" uri="ipbusudp-2.0://192.168.121.22:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.3/wib_eth_readout.xml" />
   <connection id="iceberg-wib-104" uri="ipbusudp-2.0://192.168.121.23:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.3/wib_eth_readout.xml" />
   <connection id="iceberg-wib-105" uri="ipbusudp-2.0://192.168.121.24:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.3/wib_eth_readout.xml" />
+  <connection id="iceberg-wib-106" uri="ipbusudp-2.0://192.168.121.25:50001" address_table="file://${HERMESMODULES_SHARE}/config/hermes_wib_v0.9.3/wib_eth_readout.xml" />
 </connections>

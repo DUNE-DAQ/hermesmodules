@@ -125,6 +125,10 @@ HermesCoreController::reset(bool nuke) {
     m_readout.getNode("csr.ctrl.soft_rst").write(0x0);
     m_readout.getClient().dispatch();
 
+    m_readout.getNode('pcs_pma.debug.csr.ctrl.phy_reset').write(0x1)
+    m_readout.getNode('pcs_pma.debug.csr.ctrl.phy_reset').write(0x0)
+    m_readout.getClient().dispatch()
+
 }
 
 

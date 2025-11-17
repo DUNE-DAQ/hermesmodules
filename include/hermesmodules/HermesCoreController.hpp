@@ -21,6 +21,13 @@ ERS_DECLARE_ISSUE(hermesmodules,
                   ((int)bid)
                   );
 
+
+ERS_DECLARE_ISSUE(hermesmodules,
+                  MgtDoesNotExist,
+                  "Hermes MGT " << mgtid << " does not exist",
+                  ((int)mgtid)
+                  );
+
 ERS_DECLARE_ISSUE(hermesmodules,
                   MagicNumberError,
                   "Hermes Magic number failed " << found << " (" << expected << ")",

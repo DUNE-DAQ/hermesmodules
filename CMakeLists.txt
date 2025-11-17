@@ -1,6 +1,6 @@
 
 cmake_minimum_required(VERSION 3.12)
-project(hermesmodules VERSION 2.2.2)
+project(hermesmodules VERSION 2.2.3)
 
 find_package(daq-cmake REQUIRED)
 

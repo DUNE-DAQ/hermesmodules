@@ -56,11 +56,13 @@ HermesCoreController::load_hw_info() {
   m_core_info.ref_freq = ref_freq.value();
 
   // Extra info
-  m_core_info.srcs_per_mux = m_core_info.n_src/m_core_info.n_mgt;
+  m_core_info.srcs_per_mux = m_core_info.n_src;
 
   fmt::print("Number of links: {}\n", m_core_info.n_mgt);
   fmt::print("Number of sources: {}\n", m_core_info.n_src);
   fmt::print("Reference freq: {}\n", m_core_info.ref_freq);
+  fmt::print("Sources per mux:{}\n",  m_core_info.srcs_per_mux);
+
 }
 
 
@@ -91,8 +93,8 @@ HermesCoreController::sel_tx_mux_buf(uint16_t i) {
 //-----------------------------------------------------------------------------
 void
 HermesCoreController::sel_udp_core(uint16_t i) {
-  if ( i >= m_core_info.n_src ) {
-    throw InputBufferDoesNotExist(ERS_HERE, i);
+  if ( i >= m_core_info.n_mgt ) {
+    throw MgtDoesNotExist(ERS_HERE, i);
   }
 
   m_readout.getNode("tx_path.csr_udp_core.ctrl.udp_core_sel").write(i);
@@ -124,6 +126,17 @@ HermesCoreController::reset(bool nuke) {
 
     m_readout.getNode("csr.ctrl.soft_rst").write(0x0);
     m_readout.getClient().dispatch();
+
+    // Check the ethernet core status
+    auto eth_rdy = m_readout.getNode("tx_path.tx_mux.csr.stat.eth_rdy").read();
+    m_readout.getClient().dispatch();
+
+    // If the ethernet core is not ready, issue a phy reset
+    if ( !eth_rdy ) {
+      m_readout.getNode("pcs_pma.debug.csr.ctrl.phy_reset").write(0x1);
+      m_readout.getNode("pcs_pma.debug.csr.ctrl.phy_reset").write(0x0);
+      m_readout.getClient().dispatch();
+    }
 
 }
 
@@ -264,6 +277,7 @@ HermesCoreController::config_fake_src(uint16_t link, uint16_t n_src, uint16_t da
   auto was_en_buf = m_readout.getNode("tx_path.tx_mux.csr.ctrl.en_buf").read();
   m_readout.getNode("tx_path.tx_mux.csr.ctrl.en_buf").write(0x0);
   m_readout.getClient().dispatch();
+
 
 
   for ( size_t src_id(0); src_id<m_core_info.srcs_per_mux; ++src_id) {

@@ -221,11 +221,10 @@ class HermesCliObj:
 
 @click.group(chain=True, context_settings=CONTEXT_SETTINGS)
 @click.option('-c', '--connection-file', default=None, help="IPBus connection file ")
-@click.option('-d', '--device', callback=validate_device, help="IPBus device")
+@click.option('-d', '--device', callback=validate_device, help="IPBus device", required = True)
 # @click.pass_context
 @click.pass_obj
 def cli(obj, connection_file, device):
-
     obj.connection_file_path = connection_file
     obj.device_id = device
 
@@ -524,7 +523,7 @@ def fakesrc_config(obj, link, n_src, src, data_len, rate_rdx):
     hrms.sel_tx_mux(link)
 
     if n_src > hrms.n_srcs_p_mgt:
-        raise ValueError(f"{n_src} must be lower than the number of generators per link ({n_srcs_p_mgt})")
+        raise ValueError(f"{n_src} must be lower than the number of generators per link ({hrms.n_srcs_p_mgt})")
 
     was_en = hrms.get_node('tx_path.tx_mux.csr.ctrl.en_buf').read()
     # disable buffer before reconfiguring "or bad things will happen"

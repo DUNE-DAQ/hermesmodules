@@ -187,6 +187,10 @@ class HermesCliObj:
         self.connection_file_path = 'file://${HERMESMODULES_SHARE}/config/c.xml'
         self._controller = None
 
+    def check_device_id(self):
+        if not self.device_id:
+            raise ValueError('the option --device/-d must be provided to run this command. for a list of available device names you can provide, run "hermesbutler.py addrbook".')
+
     @property
     def hermes(self):
         if self._controller is None:
@@ -225,7 +229,6 @@ class HermesCliObj:
 # @click.pass_context
 @click.pass_obj
 def cli(obj, connection_file, device):
-
     obj.connection_file_path = connection_file
     obj.device_id = device
 
@@ -263,7 +266,7 @@ def addrbook(obj):
 @click.option('--nuke', is_flag=True, default=None)
 @click.pass_obj
 def reset(obj, nuke):
-
+    obj.check_device_id() # ensure the device ID option was provided by the user.
     hrms = obj.hermes
 
     if nuke is not None:        
@@ -292,6 +295,7 @@ def reset(obj, nuke):
 @click.pass_obj
 def enable(obj, enable, buf_en, tx_en, link):
 
+    obj.check_device_id() # ensure the device ID option was provided by the user.
     hrms = obj.hermes
 
     n_mgt = hrms.n_mgt
@@ -342,6 +346,7 @@ def enable(obj, enable, buf_en, tx_en, link):
 def mux_config(obj, detid, crate, slot, link):
     """Configure the UDP blocks """
 
+    obj.check_device_id() # ensure the device ID option was provided by the user.
     hrms = obj.hermes
 
     hrms.sel_tx_mux(link)
@@ -365,6 +370,7 @@ def mux_config(obj, detid, crate, slot, link):
 def udp_config(obj, src_id, dst_id, link):
     """Configure the UDP blocks """
 
+    obj.check_device_id() # ensure the device ID option was provided by the user.
     filter_control = 0x07400307
     hrms = obj.hermes
 
@@ -422,6 +428,7 @@ def udp_config(obj, src_id, dst_id, link):
 def zcu_src_config(obj, link, en_n_src, dlen, rate_rdx):
     """Configure trivial data sources"""
 
+    obj.check_device_id() # ensure the device ID option was provided by the user.
     hw = obj.cm.getDevice(obj.device_id)
     #hw = obj.hw
     hrms = obj.hermes
@@ -507,6 +514,7 @@ def zcu_src_config(obj, link, en_n_src, dlen, rate_rdx):
 def fakesrc_config(obj, link, n_src, src, data_len, rate_rdx):
     """Configure trivial data sources"""
 
+    obj.check_device_id() # ensure the device ID option was provided by the user.
     hrms = obj.hermes
 
     all_srcs = set(range(hrms.n_srcs_p_mgt))
@@ -524,7 +532,7 @@ def fakesrc_config(obj, link, n_src, src, data_len, rate_rdx):
     hrms.sel_tx_mux(link)
 
     if n_src > hrms.n_srcs_p_mgt:
-        raise ValueError(f"{n_src} must be lower than the number of generators per link ({n_srcs_p_mgt})")
+        raise ValueError(f"{n_src} must be lower than the number of generators per link ({hrms.n_srcs_p_mgt})")
 
     was_en = hrms.get_node('tx_path.tx_mux.csr.ctrl.en_buf').read()
     # disable buffer before reconfiguring "or bad things will happen"
@@ -560,6 +568,7 @@ def fakesrc_config(obj, link, n_src, src, data_len, rate_rdx):
 def stats(obj, sel_links, seconds, show_udp, show_buf):
     """Simple program that greets NAME for a total of COUNT times."""
 
+    obj.check_device_id() # ensure the device ID option was provided by the user.
     hrms = obj.hermes
 
     mgts = list(range(hrms.n_mgt))
@@ -704,6 +713,7 @@ def tx_path(obj, phy_reset):
     TX path low-level controls
     '''
 
+    obj.check_device_id() # ensure the device ID option was provided by the user.
     hrms = obj.hermes
     pcs_pma_node = hrms.get_node('pcs_pma')
 
@@ -727,6 +737,7 @@ def tx_clock_mon(obj):
         'rx_clk_out_0',
     ]
 
+    obj.check_device_id() # ensure the device ID option was provided by the user.
     hrms = obj.hermes
     pcs_pma_node = hrms.get_node('pcs_pma')
 

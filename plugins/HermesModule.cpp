@@ -166,7 +166,7 @@ HermesModule::do_conf(const CommandData_t& /*conf_as_json*/)
   // FIXME: What the hell is this again?
   uint32_t filter_control = 0x07400307;
   for( const auto& l : links) {
-    if (l->is_disabled(*m_session)) {
+    if (l->is_excluded(*m_session)) {
       continue;  
     }
 

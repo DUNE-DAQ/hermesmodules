@@ -121,8 +121,8 @@ HermesModule::do_conf(const CommandData_t& /*conf_as_json*/)
   std::cout << std::flush;
 
   auto links = m_dal->get_links();
-  // Size check on link conf
-  if ( links.size() != core_info.n_mgt ) {
+  // A session may disable physically absent links.
+  if ( links.size() > core_info.n_mgt ) {
     throw FirmwareConfigLinkMismatch(ERS_HERE, links.size(), core_info.n_mgt);
   }
 
@@ -137,9 +137,8 @@ HermesModule::do_conf(const CommandData_t& /*conf_as_json*/)
     throw DuplicatedLinkIDs(ERS_HERE, links.size(), ids.size());
   }
 
-  // Make sure that the last link id is n_mgt-1
-  if ( *ids.rbegin() != (core_info.n_mgt-1)) {
-    throw LinkIDConfigurationError(ERS_HERE, *ids.rend(), core_info.n_mgt-1);
+  if ( *ids.rbegin() >= core_info.n_mgt) {
+    throw LinkIDConfigurationError(ERS_HERE, *ids.rbegin(), core_info.n_mgt-1);
   }
   
   // Check ip address consistency

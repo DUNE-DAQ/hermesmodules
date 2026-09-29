@@ -137,7 +137,7 @@ HermesModule::do_conf(const CommandData_t& /*conf_as_json*/)
     throw DuplicatedLinkIDs(ERS_HERE, links.size(), ids.size());
   }
 
-  if ( *ids.rbegin() >= core_info.n_mgt) {
+  if (!ids.empty() && *ids.rbegin() >= core_info.n_mgt) {
     throw LinkIDConfigurationError(ERS_HERE, *ids.rbegin(), core_info.n_mgt-1);
   }
   
@@ -164,12 +164,13 @@ HermesModule::do_conf(const CommandData_t& /*conf_as_json*/)
 
   // FIXME: What the hell is this again?
   uint32_t filter_control = 0x07400307;
+  m_enabled_link_ids.clear();
   for( const auto& l : links) {
-    if (l->is_disabled(*m_session)) {
-      continue;  
+    // Configure every declared hardware link, including disconnected links.
+    // Only session-enabled links are started or checked for readiness.
+    if (!l->is_disabled(*m_session)) {
+      m_enabled_link_ids.push_back(l->get_link_id());
     }
-
-    m_enabled_link_ids.push_back(l->get_link_id());
 
     m_core_controller->config_udp(
       l->get_link_id(),

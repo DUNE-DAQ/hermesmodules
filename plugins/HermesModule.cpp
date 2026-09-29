@@ -8,45 +8,48 @@
  * received with this code.
  */
 
-#include "appmodel/appmodelIssues.hpp"
 #include "appmodel/HermesModule.hpp"
 #include "appmodel/HermesDataSender.hpp"
 #include "appmodel/IpbusAddressTable.hpp"
-#include "confmodel/NetworkDevice.hpp"
+#include "appmodel/appmodelIssues.hpp"
 #include "confmodel/DetectorStream.hpp"
 #include "confmodel/GeoId.hpp"
+#include "confmodel/NetworkDevice.hpp"
 #include "confmodel/Session.hpp"
 
 #include "HermesModule.hpp"
 #include "hermesmodules/opmon/hermescontroller.pb.h"
 
-#include <string>
-#include <netinet/ether.h>
+#include "logging/Logging.hpp"
 #include <arpa/inet.h>
 #include <fmt/core.h>
-#include "logging/Logging.hpp"
-
-
+#include <netinet/ether.h>
+#include <string>
 
 namespace dunedaq::hermesmodules {
 
 //-----------------------------------------------------------------------------
-uint64_t ether_atou64( const std::string& addr_str ) {
-    union {
-        uint64_t          result;
-        struct ether_addr address;
-    };
-    result = 0;
-    struct ether_addr* ptr = ether_aton_r( addr_str.c_str(), &address );
-    if( !ptr ) {
-        return (~0);
-    }
-    // Big to little endian
-    return (__builtin_bswap64(result) >> 16);
+uint64_t
+ether_atou64(const std::string& addr_str)
+{
+  union
+  {
+    uint64_t result;
+    struct ether_addr address;
+  };
+  result = 0;
+  struct ether_addr* ptr = ether_aton_r(addr_str.c_str(), &address);
+  if (!ptr) {
+    return (~0);
+  }
+  // Big to little endian
+  return (__builtin_bswap64(result) >> 16);
 }
 
 //-----------------------------------------------------------------------------
-uint32_t ip_atou32(const std::string& addr_str) {
+uint32_t
+ip_atou32(const std::string& addr_str)
+{
   // Big to little endian
   return __builtin_bswap32(inet_addr(addr_str.c_str()));
 }
@@ -73,42 +76,40 @@ HermesModule::init(std::shared_ptr<appfwk::ConfigurationManager> mcfg)
 
 //-----------------------------------------------------------------------------
 void
-HermesModule::generate_opmon_data() 
+HermesModule::generate_opmon_data()
 {
   opmon::ControllerInfo ginfo;
-  ginfo.set_total_amount( m_total_amount );
-  ginfo.set_amount_since_last_get_info_call( m_amount_since_last_get_info_call.exchange(0) );
-  publish( std::move(ginfo) );
+  ginfo.set_total_amount(m_total_amount);
+  ginfo.set_amount_since_last_get_info_call(m_amount_since_last_get_info_call.exchange(0));
+  publish(std::move(ginfo));
 
-  if ( ! m_core_controller ) return ;
-  
+  if (!m_core_controller)
+    return;
+
   const auto& core_info = m_core_controller->get_info();
 
-  for ( uint16_t i(0); i<core_info.n_mgt; ++i){
+  for (uint16_t i(0); i < core_info.n_mgt; ++i) {
 
     try {
       auto geo_info = m_core_controller->read_link_geo_info(i);
-      publish( m_core_controller->read_link_stats(i),
-	       { {"detector",std::to_string(geo_info.detid)},
-		 {"crate",   std::to_string(geo_info.crateid)},
-		 {"slot",    std::to_string(geo_info.slotid)},
-		 {"link",    std::to_string(i)} } );
-    } catch ( const uhal::exception::exception& e ) {
-      ers::warning(FailedToRetrieveStats(ERS_HERE, i, e));  
+      publish(m_core_controller->read_link_stats(i),
+              { { "detector", std::to_string(geo_info.detid) },
+                { "crate", std::to_string(geo_info.crateid) },
+                { "slot", std::to_string(geo_info.slotid) },
+                { "link", std::to_string(i) } });
+    } catch (const uhal::exception::exception& e) {
+      ers::warning(FailedToRetrieveStats(ERS_HERE, i, e));
     }
-      
+
   } // loop over links
-  
 }
 
 //-----------------------------------------------------------------------------
 void
 HermesModule::do_conf(const CommandData_t& /*conf_as_json*/)
-{ 
-  // Create the ipbus 
-  auto hw = uhal::ConnectionManager::getDevice(m_dal->UID(),
-                                               m_dal->get_uri(),
-                                               m_dal->get_address_table()->get_uri());    
+{
+  // Create the ipbus
+  auto hw = uhal::ConnectionManager::getDevice(m_dal->UID(), m_dal->get_uri(), m_dal->get_address_table()->get_uri());
   hw.setTimeoutPeriod(m_dal->get_timeout_ms());
 
   m_core_controller = std::make_unique<HermesCoreController>(hw);
@@ -122,77 +123,72 @@ HermesModule::do_conf(const CommandData_t& /*conf_as_json*/)
 
   auto links = m_dal->get_links();
   // Size check on link conf
-  if ( links.size() != core_info.n_mgt ) {
+  if (links.size() != core_info.n_mgt) {
     throw FirmwareConfigLinkMismatch(ERS_HERE, links.size(), core_info.n_mgt);
   }
 
   // Sequence id check
   std::set<uint32_t> ids;
-  for( const auto l : links) {
+  for (const auto l : links) {
     ids.insert(l->get_link_id());
   }
 
   // Look duplicate link ids
-  if ( ids.size() != links.size() ) {
+  if (ids.size() != links.size()) {
     throw DuplicatedLinkIDs(ERS_HERE, links.size(), ids.size());
   }
 
   // Make sure that the last link id is n_mgt-1
-  if ( *ids.rbegin() != (core_info.n_mgt-1)) {
-    throw LinkIDConfigurationError(ERS_HERE, *ids.rend(), core_info.n_mgt-1);
+  if (*ids.rbegin() != (core_info.n_mgt - 1)) {
+    throw LinkIDConfigurationError(ERS_HERE, *ids.rend(), core_info.n_mgt - 1);
   }
-  
+
   // Check ip address consistency
   // Redundant check, schema enforces 1:1
   if (m_dal->get_destination()->get_ip_address().size() != 1) {
-      throw MultipleIPAddressConfigurationError(ERS_HERE, m_dal->get_destination()->UID(), m_dal->get_destination()->get_ip_address().size());
+    throw MultipleIPAddressConfigurationError(
+      ERS_HERE, m_dal->get_destination()->UID(), m_dal->get_destination()->get_ip_address().size());
   }
 
   // Redundant check, schema enforces 1:1
-  for( const auto& l : links) {
+  for (const auto& l : links) {
     if (l->get_uses()->get_ip_address().size() != 1) {
       throw MultipleIPAddressConfigurationError(ERS_HERE, l->get_uses()->UID(), l->get_uses()->get_ip_address().size());
     }
   }
   // All good
-  for ( uint16_t i(0); i<core_info.n_mgt; ++i){
+  for (uint16_t i(0); i < core_info.n_mgt; ++i) {
     // Put the endpoint in a safe state
     m_core_controller->enable(i, false);
   }
 
   m_core_controller->reset();
 
-
   // FIXME: What the hell is this again?
   uint32_t filter_control = 0x07400307;
-  for( const auto& l : links) {
+  for (const auto& l : links) {
     if (l->is_excluded(*m_session)) {
-      continue;  
+      continue;
     }
 
     m_enabled_link_ids.push_back(l->get_link_id());
 
-    m_core_controller->config_udp(
-      l->get_link_id(),
-      ether_atou64(l->get_uses()->get_mac_address()),
-      ip_atou32(l->get_uses()->get_ip_address().at(0)),
-      l->get_port(),
-      ether_atou64(m_dal->get_destination()->get_mac_address()),
-      ip_atou32(m_dal->get_destination()->get_ip_address().at(0)),
-      l->get_port(),
-      filter_control
-    );
+    m_core_controller->config_udp(l->get_link_id(),
+                                  ether_atou64(l->get_uses()->get_mac_address()),
+                                  ip_atou32(l->get_uses()->get_ip_address().at(0)),
+                                  l->get_port(),
+                                  ether_atou64(m_dal->get_destination()->get_mac_address()),
+                                  ip_atou32(m_dal->get_destination()->get_ip_address().at(0)),
+                                  l->get_port(),
+                                  filter_control);
 
     // Get the first DetectorStream
     // and use it for the geo id information.
     const confmodel::DetectorStream* source = l->get_streams()[0];
-    m_core_controller->config_mux(
-      l->get_link_id(),
-      source->get_geo_id()->get_detector_id(),
-      source->get_geo_id()->get_crate_id(),
-      source->get_geo_id()->get_slot_id()
-    );
-
+    m_core_controller->config_mux(l->get_link_id(),
+                                  source->get_geo_id()->get_detector_id(),
+                                  source->get_geo_id()->get_crate_id(),
+                                  source->get_geo_id()->get_slot_id());
   }
 }
 
@@ -200,17 +196,15 @@ void
 HermesModule::do_start(const CommandData_t& /*d*/)
 {
 
-  for( auto id : m_enabled_link_ids) {
+  for (auto id : m_enabled_link_ids) {
     // Put the endpoint in a safe state
     m_core_controller->enable(id, true);
   }
 
-
-  for( auto id : m_enabled_link_ids) {
+  for (auto id : m_enabled_link_ids) {
     // Put the endpoint in a safe state
     m_core_controller->is_link_in_error(id, true);
   }
-
 
   // for ( uint16_t i(0); i<core_info.n_mgt; ++i){
   //   // Put the endpoint in a safe state
@@ -221,14 +215,13 @@ HermesModule::do_start(const CommandData_t& /*d*/)
   //   // Put the endpoint in a safe state
   //   m_core_controller->is_link_in_error(i);
   // }
-
 }
 
 void
 HermesModule::do_stop(const CommandData_t& /*d*/)
 {
 
-  for( auto id : m_enabled_link_ids) {
+  for (auto id : m_enabled_link_ids) {
     // Put the endpoint in a safe state
     m_core_controller->enable(id, false);
   }

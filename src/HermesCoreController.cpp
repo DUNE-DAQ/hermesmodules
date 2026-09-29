@@ -1,43 +1,41 @@
 #include "hermesmodules/HermesCoreController.hpp"
 
-#include <chrono>         // std::chrono::seconds
-#include <thread>         // std::this_thread::sleep_for
+#include <chrono> // std::chrono::seconds
 #include <fmt/core.h>
+#include <thread> // std::this_thread::sleep_for
 
 namespace dunedaq {
 namespace hermesmodules {
 
 //-----------------------------------------------------------------------------
-HermesCoreController::HermesCoreController(uhal::HwInterface hw, std::string readout_id) :
-  m_hw(hw), m_readout(m_hw.getNode(readout_id)) {
+HermesCoreController::HermesCoreController(uhal::HwInterface hw, std::string readout_id)
+  : m_hw(hw)
+  , m_readout(m_hw.getNode(readout_id))
+{
 
-    this->load_hw_info();
-
+  this->load_hw_info();
 }
 
 //-----------------------------------------------------------------------------
-HermesCoreController::~HermesCoreController() {
-
-}
+HermesCoreController::~HermesCoreController() {}
 
 //-----------------------------------------------------------------------------
 void
-HermesCoreController::load_hw_info() {
+HermesCoreController::load_hw_info()
+{
 
   // Check magic number
   auto magic = m_readout.getNode("info.magic").read();
   m_readout.getClient().dispatch();
-  if (magic.value() != 0xdeadbeef){
-      // TODO: add ERS exception
-      throw MagicNumberError(ERS_HERE, magic.value(),0xdeadbeef);
+  if (magic.value() != 0xdeadbeef) {
+    // TODO: add ERS exception
+    throw MagicNumberError(ERS_HERE, magic.value(), 0xdeadbeef);
   }
-
 
   auto design = m_readout.getNode("info.versions.design").read();
   auto major = m_readout.getNode("info.versions.major").read();
   auto minor = m_readout.getNode("info.versions.minor").read();
   auto patch = m_readout.getNode("info.versions.patch").read();
-
 
   auto n_mgt = m_readout.getNode("info.generics.n_mgts").read();
   auto n_src = m_readout.getNode("info.generics.n_srcs").read();
@@ -61,15 +59,14 @@ HermesCoreController::load_hw_info() {
   fmt::print("Number of links: {}\n", m_core_info.n_mgt);
   fmt::print("Number of sources: {}\n", m_core_info.n_src);
   fmt::print("Reference freq: {}\n", m_core_info.ref_freq);
-  fmt::print("Sources per mux:{}\n",  m_core_info.srcs_per_mux);
-
+  fmt::print("Sources per mux:{}\n", m_core_info.srcs_per_mux);
 }
-
 
 //-----------------------------------------------------------------------------
 void
-HermesCoreController::sel_tx_mux(uint16_t i) {
-  if ( i >= m_core_info.n_mgt ) {
+HermesCoreController::sel_tx_mux(uint16_t i)
+{
+  if (i >= m_core_info.n_mgt) {
     throw LinkDoesNotExist(ERS_HERE, i);
   }
 
@@ -77,11 +74,11 @@ HermesCoreController::sel_tx_mux(uint16_t i) {
   m_readout.getClient().dispatch();
 }
 
-
 //-----------------------------------------------------------------------------
 void
-HermesCoreController::sel_tx_mux_buf(uint16_t i) {
-  if ( i >= m_core_info.n_src ) {
+HermesCoreController::sel_tx_mux_buf(uint16_t i)
+{
+  if (i >= m_core_info.n_src) {
     throw InputBufferDoesNotExist(ERS_HERE, i);
   }
 
@@ -89,11 +86,11 @@ HermesCoreController::sel_tx_mux_buf(uint16_t i) {
   m_readout.getClient().dispatch();
 }
 
-
 //-----------------------------------------------------------------------------
 void
-HermesCoreController::sel_udp_core(uint16_t i) {
-  if ( i >= m_core_info.n_mgt ) {
+HermesCoreController::sel_udp_core(uint16_t i)
+{
+  if (i >= m_core_info.n_mgt) {
     throw MgtDoesNotExist(ERS_HERE, i);
   }
 
@@ -101,49 +98,47 @@ HermesCoreController::sel_udp_core(uint16_t i) {
   m_readout.getClient().dispatch();
 }
 
-
 //-----------------------------------------------------------------------------
 void
-HermesCoreController::reset(bool nuke) {
+HermesCoreController::reset(bool nuke)
+{
 
-    if (nuke) {
-        m_readout.getNode("csr.ctrl.nuke").write(0x1);
-        m_readout.getClient().dispatch();
-
-        // time.sleep(0.1);
-        std::this_thread::sleep_for (std::chrono::milliseconds(1));
-
-        m_readout.getNode("csr.ctrl.nuke").write(0x0);
-        m_readout.getClient().dispatch();
-    }
-    
-    m_readout.getNode("csr.ctrl.soft_rst").write(0x1);
+  if (nuke) {
+    m_readout.getNode("csr.ctrl.nuke").write(0x1);
     m_readout.getClient().dispatch();
 
-    // time.sleep(0.1)
-    std::this_thread::sleep_for (std::chrono::milliseconds(1));
+    // time.sleep(0.1);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
-
-    m_readout.getNode("csr.ctrl.soft_rst").write(0x0);
+    m_readout.getNode("csr.ctrl.nuke").write(0x0);
     m_readout.getClient().dispatch();
+  }
 
-    // Check the ethernet core status
-    auto eth_rdy = m_readout.getNode("tx_path.tx_mux.csr.stat.eth_rdy").read();
+  m_readout.getNode("csr.ctrl.soft_rst").write(0x1);
+  m_readout.getClient().dispatch();
+
+  // time.sleep(0.1)
+  std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+  m_readout.getNode("csr.ctrl.soft_rst").write(0x0);
+  m_readout.getClient().dispatch();
+
+  // Check the ethernet core status
+  auto eth_rdy = m_readout.getNode("tx_path.tx_mux.csr.stat.eth_rdy").read();
+  m_readout.getClient().dispatch();
+
+  // If the ethernet core is not ready, issue a phy reset
+  if (!eth_rdy) {
+    m_readout.getNode("pcs_pma.debug.csr.ctrl.phy_reset").write(0x1);
+    m_readout.getNode("pcs_pma.debug.csr.ctrl.phy_reset").write(0x0);
     m_readout.getClient().dispatch();
-
-    // If the ethernet core is not ready, issue a phy reset
-    if ( !eth_rdy ) {
-      m_readout.getNode("pcs_pma.debug.csr.ctrl.phy_reset").write(0x1);
-      m_readout.getNode("pcs_pma.debug.csr.ctrl.phy_reset").write(0x0);
-      m_readout.getClient().dispatch();
-    }
-
+  }
 }
-
 
 //-----------------------------------------------------------------------------
 bool
-HermesCoreController::is_link_in_error(uint16_t link, bool do_throw) {
+HermesCoreController::is_link_in_error(uint16_t link, bool do_throw)
+{
 
   this->sel_tx_mux(link);
 
@@ -156,7 +151,7 @@ HermesCoreController::is_link_in_error(uint16_t link, bool do_throw) {
 
   bool is_error = (err || !eth_rdy || !src_rdy || !udp_rdy);
 
-  if ( do_throw && is_error ) {
+  if (do_throw && is_error) {
     throw LinkInError(ERS_HERE, link, err, eth_rdy, src_rdy, udp_rdy);
   }
 
@@ -165,18 +160,19 @@ HermesCoreController::is_link_in_error(uint16_t link, bool do_throw) {
 
 //-----------------------------------------------------------------------------
 void
-HermesCoreController::enable(uint16_t link, bool enable) {
+HermesCoreController::enable(uint16_t link, bool enable)
+{
 
   this->sel_tx_mux(link);
 
   auto& tx_mux_ctrl = m_readout.getNode("tx_path.tx_mux.csr.ctrl");
-  
+
   // Not sure what to do with this
   auto tx_en = tx_mux_ctrl.getNode("tx_en").read();
   auto buf_en = tx_mux_ctrl.getNode("en_buf").read();
   auto ctrl_en = tx_mux_ctrl.getNode("en").read();
 
-  if ( enable ) {
+  if (enable) {
 
     // Assume that all is off
 
@@ -192,7 +188,6 @@ HermesCoreController::enable(uint16_t link, bool enable) {
     tx_mux_ctrl.getNode("en_buf").write(0x1);
     tx_mux_ctrl.getClient().dispatch();
 
-
   } else {
 
     // Disable buffers last
@@ -206,17 +201,14 @@ HermesCoreController::enable(uint16_t link, bool enable) {
     // Disable the main logic
     tx_mux_ctrl.getNode("en").write(0x0);
     tx_mux_ctrl.getClient().dispatch();
-
   }
-
 }
-
 
 //-----------------------------------------------------------------------------
 void
-HermesCoreController::config_mux(uint16_t link, uint16_t det, uint16_t crate, uint16_t slot) {
+HermesCoreController::config_mux(uint16_t link, uint16_t det, uint16_t crate, uint16_t slot)
+{
   this->sel_tx_mux(link);
-
 
   auto& mux_ctrl = m_readout.getNode("tx_path.tx_mux.mux.ctrl");
 
@@ -224,15 +216,21 @@ HermesCoreController::config_mux(uint16_t link, uint16_t det, uint16_t crate, ui
   mux_ctrl.getNode("crate").write(crate);
   mux_ctrl.getNode("slot").write(slot);
   mux_ctrl.getClient().dispatch();
-    
 }
-
 
 //-----------------------------------------------------------------------------
 void
-HermesCoreController::config_udp( uint16_t link, uint64_t src_mac, uint32_t src_ip, uint16_t src_port, uint64_t dst_mac, uint32_t dst_ip, uint16_t dst_port, uint32_t filters) {
+HermesCoreController::config_udp(uint16_t link,
+                                 uint64_t src_mac,
+                                 uint32_t src_ip,
+                                 uint16_t src_port,
+                                 uint64_t dst_mac,
+                                 uint32_t dst_ip,
+                                 uint16_t dst_port,
+                                 uint32_t filters)
+{
 
-  if ( link >= m_core_info.n_mgt ) {
+  if (link >= m_core_info.n_mgt) {
     throw LinkDoesNotExist(ERS_HERE, link);
   }
 
@@ -241,8 +239,7 @@ HermesCoreController::config_udp( uint16_t link, uint64_t src_mac, uint32_t src_
   // const std::string udp_ctrl_name = fmt::format("udp.udp_core_{}.udp_core_control.nz_rst_ctrl");
   const auto& udp_ctrl = m_readout.getNode("tx_path.udp_core.udp_core_control");
 
-
-  udp_ctrl.getNode("src_addr_ctrl.use_external").write(0);  
+  udp_ctrl.getNode("src_addr_ctrl.use_external").write(0);
 
   // Load the source mac address
   udp_ctrl.getNode("src_addr_ctrl.src_mac_addr_lower").write(src_mac & 0xffffffff);
@@ -262,15 +259,14 @@ HermesCoreController::config_udp( uint16_t link, uint64_t src_mac, uint32_t src_
   udp_ctrl.getNode("src_addr_ctrl.src_port").write(src_port);
   udp_ctrl.getNode("ctrl.dst_port").write(dst_port);
 
-
   udp_ctrl.getNode("ctrl.filter_control").write(filters);
   udp_ctrl.getClient().dispatch();
-
 }
 
 //-----------------------------------------------------------------------------
 void
-HermesCoreController::config_fake_src(uint16_t link, uint16_t n_src, uint16_t data_len, uint16_t rate) {
+HermesCoreController::config_fake_src(uint16_t link, uint16_t n_src, uint16_t data_len, uint16_t rate)
+{
 
   this->sel_tx_mux(link);
 
@@ -278,20 +274,17 @@ HermesCoreController::config_fake_src(uint16_t link, uint16_t n_src, uint16_t da
   m_readout.getNode("tx_path.tx_mux.csr.ctrl.en_buf").write(0x0);
   m_readout.getClient().dispatch();
 
-
-
-  for ( size_t src_id(0); src_id<m_core_info.srcs_per_mux; ++src_id) {
+  for (size_t src_id(0); src_id < m_core_info.srcs_per_mux; ++src_id) {
     this->sel_tx_mux_buf(src_id);
 
-
-    bool src_en = (src_id<n_src);
+    bool src_en = (src_id < n_src);
     m_readout.getNode("tx_path.tx_mux.buf.ctrl.fake_en").write(src_en);
     m_readout.getClient().dispatch();
     if (!src_en) {
       continue;
     }
     m_readout.getNode("tx_path.tx_mux.buf.ctrl.dlen").write(data_len);
-        
+
     m_readout.getNode("tx_path.tx_mux.buf.ctrl.rate_rdx").write(rate);
     m_readout.getClient().dispatch();
   }
@@ -300,10 +293,10 @@ HermesCoreController::config_fake_src(uint16_t link, uint16_t n_src, uint16_t da
   m_readout.getClient().dispatch();
 }
 
-
 //-----------------------------------------------------------------------------
 HermesCoreController::LinkGeoInfo
-HermesCoreController::read_link_geo_info(uint16_t link) {
+HermesCoreController::read_link_geo_info(uint16_t link)
+{
 
   this->sel_tx_mux(link);
 
@@ -313,56 +306,55 @@ HermesCoreController::read_link_geo_info(uint16_t link) {
 
   m_readout.getClient().dispatch();
 
-  return {detid.value(), crate.value(), slot.value()};
+  return { detid.value(), crate.value(), slot.value() };
 }
 
 //-----------------------------------------------------------------------------
-  opmon::LinkInfo
-  HermesCoreController::read_link_stats(uint16_t link) {
-    this->sel_tx_mux(link);
-    this->sel_udp_core(link);
+opmon::LinkInfo
+HermesCoreController::read_link_stats(uint16_t link)
+{
+  this->sel_tx_mux(link);
+  this->sel_udp_core(link);
 
-    opmon::LinkInfo info;
+  opmon::LinkInfo info;
 
-    const auto& mux_stats = m_readout.getNode("tx_path.tx_mux.csr.stat");
-    auto err = mux_stats.getNode("err").read();
-    auto eth_rdy = mux_stats.getNode("eth_rdy").read();
-    auto src_rdy = mux_stats.getNode("src_rdy").read();
-    auto udp_rdy = mux_stats.getNode("udp_rdy").read();
-    mux_stats.getClient().dispatch();
+  const auto& mux_stats = m_readout.getNode("tx_path.tx_mux.csr.stat");
+  auto err = mux_stats.getNode("err").read();
+  auto eth_rdy = mux_stats.getNode("eth_rdy").read();
+  auto src_rdy = mux_stats.getNode("src_rdy").read();
+  auto udp_rdy = mux_stats.getNode("udp_rdy").read();
+  mux_stats.getClient().dispatch();
 
-    const auto& udp_ctrl = m_readout.getNode(fmt::format("tx_path.udp_core.udp_core_control"));
-    const auto& rx_stats = udp_ctrl.getNode("rx_packet_counters");
+  const auto& udp_ctrl = m_readout.getNode(fmt::format("tx_path.udp_core.udp_core_control"));
+  const auto& rx_stats = udp_ctrl.getNode("rx_packet_counters");
 
-    auto rx_arp_count = rx_stats.getNode("arp_count").read();
-    auto rx_ping_count = rx_stats.getNode("ping_count").read();
-    auto rx_udp_count = rx_stats.getNode("udp_count").read();
-    rx_stats.getClient().dispatch();
+  auto rx_arp_count = rx_stats.getNode("arp_count").read();
+  auto rx_ping_count = rx_stats.getNode("ping_count").read();
+  auto rx_udp_count = rx_stats.getNode("udp_count").read();
+  rx_stats.getClient().dispatch();
 
-    const auto& tx_stats = udp_ctrl.getNode("tx_packet_counters");
+  const auto& tx_stats = udp_ctrl.getNode("tx_packet_counters");
 
-    auto tx_arp_count = tx_stats.getNode("arp_count").read();
-    auto tx_ping_count = tx_stats.getNode("ping_count").read();
-    auto tx_udp_count = tx_stats.getNode("udp_count").read();
-    tx_stats.getClient().dispatch();
+  auto tx_arp_count = tx_stats.getNode("arp_count").read();
+  auto tx_ping_count = tx_stats.getNode("ping_count").read();
+  auto tx_udp_count = tx_stats.getNode("udp_count").read();
+  tx_stats.getClient().dispatch();
 
+  info.set_err(err.value());
+  info.set_eth_rdy(eth_rdy.value());
+  info.set_src_rdy(src_rdy.value());
+  info.set_udp_rdy(udp_rdy.value());
 
-    info.set_err(err.value());
-    info.set_eth_rdy(eth_rdy.value());
-    info.set_src_rdy(src_rdy.value());
-    info.set_udp_rdy(udp_rdy.value());
+  info.set_rcvd_arp_count(rx_arp_count.value());
+  info.set_rcvd_ping_count(rx_ping_count.value());
+  info.set_rcvd_udp_count(rx_udp_count.value());
 
-    info.set_rcvd_arp_count(rx_arp_count.value());
-    info.set_rcvd_ping_count(rx_ping_count.value());
-    info.set_rcvd_udp_count(rx_udp_count.value());
+  info.set_sent_arp_count(tx_arp_count.value());
+  info.set_sent_ping_count(tx_ping_count.value());
+  info.set_sent_udp_count(tx_udp_count.value());
 
-    info.set_sent_arp_count(tx_arp_count.value());
-    info.set_sent_ping_count(tx_ping_count.value());
-    info.set_sent_udp_count(tx_udp_count.value());
-
-    return info;
-
-  }
+  return info;
+}
 
 }
 }

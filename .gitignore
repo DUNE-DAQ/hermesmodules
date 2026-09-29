@@ -5,3 +5,4 @@ build
 *.d
 *.o
 hermes_udp_srv
+.clang-format*

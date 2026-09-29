@@ -15,15 +15,14 @@
 #include "hermesmodules/HermesCoreController.hpp"
 
 namespace py = pybind11;
-using namespace pybind11::literals; 
-
+using namespace pybind11::literals;
 
 namespace dunedaq::hermesmodules::python {
 
 void
 register_hermescorecontroller(py::module& m)
 {
-    py::class_<HermesCoreController>(m, "HermesCoreController")
+  py::class_<HermesCoreController>(m, "HermesCoreController")
     .def(py::init<uhal::HwInterface>())
     // .def("load_hw_info", &HermesCoreController::load_hw_info)
     .def("sel_tx_mux", &HermesCoreController::sel_tx_mux)
@@ -35,7 +34,7 @@ register_hermescorecontroller(py::module& m)
     .def("config_udp", &HermesCoreController::config_udp)
     .def("config_fake_src", &HermesCoreController::config_fake_src)
 
-      //.def("read_link_stats", &HermesCoreController::read_link_stats)  //opmon
+    //.def("read_link_stats", &HermesCoreController::read_link_stats)  //opmon
 
     // .def("get_attribute",
     //      py::overload_cast<const std::string&>

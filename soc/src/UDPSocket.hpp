@@ -13,24 +13,32 @@
 #include <string>
 #include <vector>
 
-
 namespace udp {
-  class SocketError : public std::exception {};
-  class OpenError : public std::exception {};
-  class CloseError : public std::exception {};
-  class ShutdownError : public std::exception {};
-  class BindError : public std::exception {};
-  class ConnectError : public std::exception {};
-  class SetSockOptError : public std::exception {};
-  class GetSockNameError : public std::exception {};
-  class SendError : public std::exception {};
-  class RecvError : public std::exception {};
+class SocketError : public std::exception
+{};
+class OpenError : public std::exception
+{};
+class CloseError : public std::exception
+{};
+class ShutdownError : public std::exception
+{};
+class BindError : public std::exception
+{};
+class ConnectError : public std::exception
+{};
+class SetSockOptError : public std::exception
+{};
+class GetSockNameError : public std::exception
+{};
+class SendError : public std::exception
+{};
+class RecvError : public std::exception
+{};
 }
 
 class UDPSocket
 {
 public:
-
   typedef struct sockaddr_in sockaddr_in_t;
   typedef struct sockaddr sockaddr_t;
   typedef std::vector<uint8_t> msg_t;
@@ -53,10 +61,9 @@ public:
     // AddressError = -66,
   };
 
-  static constexpr uint16_t msg_buf_size = 10*1024;
+  static constexpr uint16_t msg_buf_size = 10 * 1024;
 
 private:
-
   int m_sock{ -1 };
   sockaddr_in_t m_self_addr{};
   socklen_t m_self_addr_len = sizeof(m_self_addr);
@@ -170,7 +177,8 @@ public:
   int send(const T& message, const IPv4& ipaddr) const
   {
     // // UPnP
-    // std::string msg = "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: ssockp:discover\r\nST: ssockp:all\r\nMX: 1\r\n\r\n";
+    // std::string msg = "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: ssockp:discover\r\nST:
+    // ssockp:all\r\nMX: 1\r\n\r\n";
     sockaddr_in_t addr_in = ipaddr;
     socklen_t addr_in_len = sizeof(addr_in);
     int ret = ::sendto(m_sock, (const char*)message.data(), message.size(), 0, (sockaddr_t*)&addr_in, addr_in_len);
@@ -256,7 +264,6 @@ public:
       return addr_in;
     }
 
-
   public:
     static IPv4 Any(uint16_t portno) { return IPv4{ INADDR_ANY, portno }; }
     static IPv4 Loopback(uint16_t portno) { return IPv4{ INADDR_LOOPBACK, portno }; }
@@ -269,7 +276,11 @@ public:
 
     bool operator!=(const IPv4& other) const { return !(*this == other); }
 
-    std::string addr_string() const { return std::to_string(octets[0]) + '.' + std::to_string(octets[1]) + '.' + std::to_string(octets[2]) + '.' + std::to_string(octets[3]); }
+    std::string addr_string() const
+    {
+      return std::to_string(octets[0]) + '.' + std::to_string(octets[1]) + '.' + std::to_string(octets[2]) + '.' +
+             std::to_string(octets[3]);
+    }
 
     std::string port_string() const { return std::to_string(port); }
 
@@ -283,7 +294,6 @@ public:
       *(uint32_t*)octets.data() = htonl(ipaddr);
       port = portno;
     }
-
   };
 };
 

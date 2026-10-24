@@ -20,52 +20,47 @@
 #include <limits>
 #include <string>
 
-namespace dunedaq { 
+namespace dunedaq {
 
 ERS_DECLARE_ISSUE(hermesmodules,
                   FirmwareConfigLinkMismatch,
-                  "Number of links in configuration ("<< cfg_n_links << ") and firmware (" << fw_n_links << ") don't match",
-                  ((uint16_t)cfg_n_links)((uint16_t)fw_n_links)
-                  );
+                  "Number of links in configuration (" << cfg_n_links << ") and firmware (" << fw_n_links
+                                                       << ") don't match",
+                  ((uint16_t)cfg_n_links)((uint16_t)fw_n_links));
 
 ERS_DECLARE_ISSUE(hermesmodules,
                   DuplicatedLinkIDs,
-                  "Duplicated link ids detected ( number of links in config: "<< cfg_n_links << " but only " << cfg_n_links_unique << ") are uniqe)",
-                  ((uint16_t)cfg_n_links)((uint16_t)cfg_n_links_unique)
-                  );
+                  "Duplicated link ids detected ( number of links in config: " << cfg_n_links << " but only "
+                                                                               << cfg_n_links_unique << ") are uniqe)",
+                  ((uint16_t)cfg_n_links)((uint16_t)cfg_n_links_unique));
 
 ERS_DECLARE_ISSUE(hermesmodules,
                   FailedToRetrieveStats,
                   "Failed to retrieve hermes code stats for link " << link,
-                  ((uint16_t)link)
-                  );
+                  ((uint16_t)link));
 
 ERS_DECLARE_ISSUE(hermesmodules,
                   InvalidSourceStream,
                   "Configuration for " << what << " does not contain a detector stream",
-                  ((std::string)what)
-                  );
+                  ((std::string)what));
 
 ERS_DECLARE_ISSUE(hermesmodules,
                   MultipleIPAddressConfigurationError,
-                  "Found " << n_ips << " ip addresses found in devcie " << dev_id << " configuration while expecting 1" ,
-                  ((std::string)dev_id)((uint16_t)n_ips)
-                  );
-
+                  "Found " << n_ips << " ip addresses found in devcie " << dev_id << " configuration while expecting 1",
+                  ((std::string)dev_id)((uint16_t)n_ips));
 
 ERS_DECLARE_ISSUE(hermesmodules,
                   LinkIDConfigurationError,
-                  "Last link id found " << last_link_id << " does not match expected " <<  last_link_exp,
-                  ((uint16_t)last_link_id)((uint16_t)last_link_exp)
-                  );
+                  "Last link id found " << last_link_id << " does not match expected " << last_link_exp,
+                  ((uint16_t)last_link_id)((uint16_t)last_link_exp));
 
 namespace appmodel {
-  class HermesCoreController;
+class HermesCoreController;
 }
 namespace confmodel {
-  class Session;
+class Session;
 }
-                  
+
 namespace hermesmodules {
 
 class HermesModule : public dunedaq::appfwk::DAQModule
@@ -84,8 +79,8 @@ public:
 
 protected:
   void generate_opmon_data() override;
-private:
 
+private:
   // Commands HermesModule can receive
 
   void do_conf(const CommandData_t&);
@@ -97,10 +92,9 @@ private:
   const confmodel::Session* m_session;
   std::vector<uint32_t> m_enabled_link_ids;
 
-  std::atomic<int64_t> m_total_amount {0};
-  std::atomic<int>     m_amount_since_last_get_info_call {0};
+  std::atomic<int64_t> m_total_amount{ 0 };
+  std::atomic<int> m_amount_since_last_get_info_call{ 0 };
 };
-
 
 } // namespace hermesmodules
 } // namespace dunedaq
